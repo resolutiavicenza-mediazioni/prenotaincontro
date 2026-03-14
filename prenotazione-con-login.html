@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prenota Primo Incontro di Mediazione</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blu:       #1a4a7a;
+    --azzurro:   #2980b9;
+    --celeste:   #5dade2;
+    --cielo:     #d6eaf8;
+    --bianco:    #f4f9fd;
+    --testo:     #1c2f45;
+    --grigio:    #7f8c9a;
+    --verde:     #1a7a5e;
+    --rosso:     #c0392b;
+    --bordo:     #b8d4ea;
+    --arancio:   #e67e22;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Raleway', sans-serif;
+    background: var(--bianco);
+    color: var(--testo);
+    min-height: 100vh;
+  }
+
+  /* ===== LOGIN SCREEN ===== */
+  #login-screen {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--blu) 0%, var(--azzurro) 60%, var(--celeste) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .login-box {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 60px rgba(26,74,122,0.3);
+    animation: fadeUp 0.4s ease;
+  }
+
+  .login-logo {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--blu), var(--azzurro));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 4px 16px rgba(26,74,122,0.3);
+  }
+
+  .login-box h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--blu);
+    text-align: center;
+    margin-bottom: 0.3rem;
+  }
+
+  .login-box .login-sub {
+    font-size: 0.78rem;
+    color: var(--grigio);
+    text-align: center;
+    margin-bottom: 2rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .login-input-group { margin-bottom: 1.1rem; }
+
+  .login-input-group label {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--azzurro);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+
+  .login-input-group input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1.5px solid var(--bordo);
+    border-radius: 8px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.9rem;
+    color: var(--testo);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .login-input-group input:focus {
+    border-color: var(--azzurro);
+    box-shadow: 0 0 0 3px rgba(41,128,185,0.12);
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 0.9rem;
+    background: linear-gradient(135deg, var(--blu), var(--azzurro));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 3px 12px rgba(26,74,122,0.25);
+    margin-top: 0.5rem;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 18px rgba(26,74,122,0.35);
+  }
+
+  #login-error {
+    background: #fdecea;
+    color: var(--rosso);
+    padding: 0.7rem 1rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  /* ===== ADMIN PANEL ===== */
+  #admin-screen {
+    display: none;
+    min-height: 100vh;
+    background: var(--bianco);
+  }
+
+  .admin-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .admin-header h1 {
+    font-family: 'Lora', serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: white;
+  }
+
+  .admin-header p {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 0.15rem;
+  }
+
+  .admin-nav {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-admin-nav {
+    padding: 0.5rem 1.1rem;
+    border-radius: 6px;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85);
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-admin-nav:hover, .btn-admin-nav.active {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.6);
+    color: white;
+  }
+
+  .admin-main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .admin-card {
+    background: white;
+    border: 1px solid var(--bordo);
+    border-radius: 10px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(41,128,185,0.07);
+  }
+
+  .admin-card h3 {
+    font-family: 'Lora', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: var(--blu);
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 2px solid var(--cielo);
+  }
+
+  /* Add user form */
+  .add-user-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    align-items: end;
+  }
+
+  @media (max-width: 500px) {
+    .add-user-form { grid-template-columns: 1fr; }
+  }
+
+  .add-user-form .input-group { margin-bottom: 0; }
+
+  .input-group label {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--azzurro);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+
+  .input-group input, .input-group select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--bordo);
+    border-radius: 6px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.88rem;
+    color: var(--testo);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: white;
+  }
+
+  .input-group input:focus, .input-group select:focus {
+    border-color: var(--azzurro);
+    box-shadow: 0 0 0 3px rgba(41,128,185,0.12);
+  }
+
+  .btn-add {
+    padding: 0.75rem 1.2rem;
+    background: linear-gradient(135deg, var(--verde), #2ecc71);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(26,122,94,0.2);
+  }
+
+  .btn-add:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,122,94,0.3); }
+
+  #add-user-msg {
+    margin-top: 0.8rem;
+    font-size: 0.82rem;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    display: none;
+  }
+
+  /* Users table */
+  .users-table { width: 100%; border-collapse: collapse; }
+
+  .users-table th {
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--grigio);
+    font-weight: 600;
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border-bottom: 2px solid var(--cielo);
+  }
+
+  .users-table td {
+    padding: 0.8rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--cielo);
+    vertical-align: middle;
+  }
+
+  .users-table tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .badge-admin { background: rgba(26,74,122,0.1); color: var(--blu); }
+  .badge-user  { background: rgba(41,128,185,0.1); color: var(--azzurro); }
+
+  .btn-delete {
+    padding: 0.3rem 0.7rem;
+    background: none;
+    border: 1.5px solid #e8bdb9;
+    border-radius: 5px;
+    color: var(--rosso);
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-delete:hover { background: var(--rosso); color: white; border-color: var(--rosso); }
+
+  .empty-users {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--grigio);
+    font-size: 0.85rem;
+  }
+
+  /* Change password */
+  .change-pwd-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; align-items: end; }
+  @media (max-width: 500px) { .change-pwd-form { grid-template-columns: 1fr; } }
+
+  /* ===== MAIN APP ===== */
+  #app-screen { display: none; }
+
+  /* TOP BAR when logged in */
+  .top-bar {
+    background: rgba(26,74,122,0.06);
+    border-bottom: 1px solid var(--bordo);
+    padding: 0.55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    font-size: 0.78rem;
+    color: var(--grigio);
+  }
+
+  .top-bar strong { color: var(--blu); }
+
+  .btn-topbar {
+    padding: 0.35rem 0.9rem;
+    border-radius: 5px;
+    border: 1.5px solid var(--bordo);
+    background: white;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--grigio);
+  }
+
+  .btn-topbar:hover { border-color: var(--azzurro); color: var(--azzurro); }
+  .btn-topbar.admin { border-color: #2c3e50; color: #2c3e50; }
+  .btn-topbar.admin:hover { background: #2c3e50; color: white; }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, var(--blu) 0%, var(--azzurro) 100%);
+    padding: 2rem 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    box-shadow: 0 2px 12px rgba(26,74,122,0.2);
+  }
+
+  .logo {
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-family: 'Lora', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: white;
+    letter-spacing: 0.02em;
+  }
+
+  header p {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 0.2rem;
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    height: 4px;
+    background: var(--cielo);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--azzurro), var(--celeste));
+    transition: width 0.4s ease;
+  }
+
+  /* MAIN */
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+
+  /* STEPS */
+  .steps {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 2.5rem;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 120px;
+    position: relative;
+  }
+
+  .step::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 60%;
+    right: -40%;
+    height: 2px;
+    background: var(--bordo);
+    z-index: 0;
+  }
+
+  .step:last-child::after { display: none; }
+
+  .step-num {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--bordo);
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--grigio);
+    z-index: 1;
+    transition: all 0.3s;
+  }
+
+  .step.active .step-num {
+    background: var(--azzurro);
+    border-color: var(--azzurro);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(41,128,185,0.15);
+  }
+
+  .step.done .step-num {
+    background: var(--verde);
+    border-color: var(--verde);
+    color: white;
+  }
+
+  .step-label {
+    font-size: 0.65rem;
+    color: var(--grigio);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+    text-align: center;
+  }
+
+  .step.active .step-label { color: var(--azzurro); font-weight: 600; }
+  .step.done .step-label { color: var(--verde); }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeUp 0.35s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-title {
+    font-family: 'Lora', serif;
+    font-size: 1.7rem;
+    font-weight: 400;
+    color: var(--blu);
+    margin-bottom: 0.4rem;
+  }
+
+  .panel-sub {
+    font-size: 0.84rem;
+    color: var(--grigio);
+    margin-bottom: 2rem;
+    line-height: 1.65;
+  }
+
+  /* CARD */
+  .card {
+    background: white;
+    border: 1px solid var(--bordo);
+    border-radius: 8px;
+    padding: 1.8rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 2px 8px rgba(41,128,185,0.06);
+  }
+
+  /* LOADING */
+  .loading-box {
+    text-align: center;
+    padding: 4rem 1rem;
+  }
+
+  .spinner {
+    width: 44px; height: 44px;
+    border: 4px solid var(--cielo);
+    border-top-color: var(--azzurro);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1.2rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-box p { color: var(--grigio); font-size: 0.85rem; }
+
+  /* SLOTS */
+  .month-group { margin-bottom: 1.8rem; }
+
+  .month-label {
+    font-family: 'Lora', serif;
+    font-size: 1rem;
+    color: var(--azzurro);
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--cielo);
+    letter-spacing: 0.02em;
+  }
+
+  .slot-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.2rem;
+    border: 1.5px solid var(--bordo);
+    border-radius: 6px;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  .slot-item:hover {
+    border-color: var(--celeste);
+    background: var(--cielo);
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(41,128,185,0.12);
+  }
+
+  .slot-item.selected {
+    border-color: var(--azzurro);
+    background: linear-gradient(135deg, var(--azzurro), var(--celeste));
+    color: white;
+    transform: translateX(3px);
+  }
+
+  .slot-item.selected .slot-time,
+  .slot-item.selected .slot-arrow { color: rgba(255,255,255,0.85); }
+
+  .slot-day { font-weight: 600; font-size: 0.92rem; }
+  .slot-time { font-size: 0.78rem; color: var(--grigio); margin-top: 0.15rem; }
+
+  .slot-arrow {
+    color: var(--celeste);
+    font-size: 1.2rem;
+    font-weight: 300;
+  }
+
+  /* FORM */
+  .input-group { margin-bottom: 1.3rem; }
+
+  .input-group label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--azzurro);
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1.5px solid var(--bordo);
+    border-radius: 6px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.9rem;
+    color: var(--testo);
+    background: white;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input-group input:focus {
+    border-color: var(--azzurro);
+    box-shadow: 0 0 0 3px rgba(41,128,185,0.12);
+  }
+
+  /* SUMMARY */
+  .summary-box {
+    background: var(--cielo);
+    border: 1px solid var(--bordo);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--bordo);
+    font-size: 0.85rem;
+    gap: 1rem;
+  }
+
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { color: var(--grigio); flex-shrink: 0; }
+  .summary-value { font-weight: 600; color: var(--blu); text-align: right; }
+
+  /* BUTTONS */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    width: 100%;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--azzurro), var(--celeste));
+    color: white;
+    box-shadow: 0 3px 10px rgba(41,128,185,0.25);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(41,128,185,0.35);
+  }
+
+  .btn-confirm {
+    background: linear-gradient(135deg, var(--verde), #2ecc71);
+    color: white;
+    box-shadow: 0 3px 10px rgba(26,122,94,0.25);
+  }
+
+  .btn-confirm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(26,122,94,0.35);
+  }
+
+  .btn-confirm:disabled {
+    background: #bdc3c7;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-back {
+    background: none;
+    border: 1.5px solid var(--bordo);
+    color: var(--grigio);
+    margin-bottom: 1rem;
+    font-size: 0.78rem;
+    padding: 0.6rem 1rem;
+    width: auto;
+  }
+
+  .btn-back:hover { border-color: var(--azzurro); color: var(--azzurro); }
+
+  /* STATUS */
+  .status-msg {
+    padding: 0.8rem 1rem;
+    font-size: 0.82rem;
+    margin: 1rem 0 0;
+    border-radius: 6px;
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .status-msg.error { background: #fdecea; color: var(--rosso); display: flex; }
+  .status-msg.loading { background: var(--cielo); color: var(--azzurro); display: flex; }
+
+  .mini-spin {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(41,128,185,0.3);
+    border-top-color: var(--azzurro);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* SUCCESS */
+  .success-box { text-align: center; padding: 2rem 0; }
+
+  .success-icon {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--verde), #2ecc71);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 4px 16px rgba(26,122,94,0.3);
+  }
+
+  .success-box h2 {
+    font-family: 'Lora', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    color: var(--blu);
+    margin-bottom: 0.5rem;
+  }
+
+  .success-box p { color: var(--grigio); font-size: 0.88rem; line-height: 1.7; }
+
+  .event-confirm {
+    background: var(--cielo);
+    border: 1px solid var(--bordo);
+    border-left: 4px solid var(--verde);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+    text-align: left;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: var(--testo);
+  }
+
+  .no-slots {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--grigio);
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+
+  .no-slots strong { color: var(--blu); }
+
+  @media (max-width: 480px) {
+    header { padding: 1.5rem; }
+    main { padding: 2rem 1rem 4rem; }
+    .panel-title { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SCHERMATA LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <h2>Accesso Riservato</h2>
+    <p class="login-sub">Mediazione — Vicenza</p>
+
+    <div class="login-input-group">
+      <label>Nome utente</label>
+      <input type="text" id="login-username" placeholder="Inserisci username" autocomplete="username" />
+    </div>
+    <div class="login-input-group">
+      <label>Password</label>
+      <div style="position:relative;">
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" style="padding-right:3rem;" />
+        <button onclick="togglePwd('login-password', this)" type="button" style="position:absolute; right:0.8rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--grigio); font-size:1rem; padding:0; line-height:1;">👁</button>
+      </div>
+    </div>
+    <button class="btn-login" onclick="doLogin()">Accedi →</button>
+
+    <!-- RICORDAMI -->
+    <div style="display:flex; align-items:center; gap:0.6rem; margin-top:1rem;">
+      <input type="checkbox" id="remember-me" style="width:16px; height:16px; accent-color:var(--azzurro); cursor:pointer; flex-shrink:0;" />
+      <label for="remember-me" style="font-size:0.78rem; color:var(--grigio); cursor:pointer; user-select:none;">
+        Ricordami su questo dispositivo
+      </label>
+      <button onclick="showRememberInfo()" type="button" style="background:rgba(41,128,185,0.12); border:none; border-radius:50%; width:18px; height:18px; font-size:0.65rem; color:var(--azzurro); cursor:pointer; font-weight:700; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:0;">?</button>
+    </div>
+    <p style="font-size:0.75rem; color:var(--grigio); text-align:center; margin-top:1rem; line-height:1.6;">
+      Primo accesso? Inserisci solo il tuo username<br>e lascia la password vuota.
+    </p>
+    <button onclick="showForgotPassword()" type="button" style="width:100%; background:none; border:none; cursor:pointer; color:var(--azzurro); font-size:0.78rem; margin-top:0.5rem; text-decoration:underline; font-family:'Raleway',sans-serif;">Password dimenticata?</button>
+    <div id="login-error">⚠ Credenziali non valide. Riprova.</div>
+  </div>
+</div>
+
+<!-- ===== PRIMO ACCESSO: CREA PASSWORD ===== -->
+<div id="firstlogin-screen" style="display:none; min-height:100vh; background: linear-gradient(135deg, var(--blu) 0%, var(--azzurro) 60%, var(--celeste) 100%); align-items:center; justify-content:center; padding:2rem;">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </div>
+    <h2>Benvenuto!</h2>
+    <p class="login-sub">Primo accesso — scegli la tua password</p>
+    <p style="font-size:0.82rem; color:var(--grigio); text-align:center; margin-bottom:1.5rem; line-height:1.6;">
+      Ciao <strong id="firstlogin-name"></strong>, è il tuo primo accesso.<br>Scegli una password personale per i prossimi accessi.
+    </p>
+    <div class="login-input-group">
+      <label>Nuova password</label>
+      <div style="position:relative;">
+        <input type="password" id="firstlogin-pwd1" placeholder="Minimo 6 caratteri" style="padding-right:3rem;" />
+        <button onclick="togglePwd('firstlogin-pwd1', this)" type="button" style="position:absolute; right:0.8rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--grigio); font-size:1rem; padding:0; line-height:1;">👁</button>
+      </div>
+    </div>
+    <div class="login-input-group">
+      <label>Conferma password</label>
+      <div style="position:relative;">
+        <input type="password" id="firstlogin-pwd2" placeholder="Ripeti la password" style="padding-right:3rem;" />
+        <button onclick="togglePwd('firstlogin-pwd2', this)" type="button" style="position:absolute; right:0.8rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--grigio); font-size:1rem; padding:0; line-height:1;">👁</button>
+      </div>
+    </div>
+    <button class="btn-login" onclick="doSetFirstPassword()">Salva e accedi →</button>
+    <div id="firstlogin-error" style="background:#fdecea; color:var(--rosso); padding:0.7rem 1rem; border-radius:6px; font-size:0.82rem; margin-top:1rem; display:none;"></div>
+  </div>
+</div>
+
+<!-- ===== PANNELLO ADMIN ===== -->
+<div id="admin-screen">
+  <div class="admin-header">
+    <div>
+      <h1>Pannello Amministrazione</h1>
+      <p>Gestione utenti — <span id="admin-logged-name"></span></p>
+    </div>
+    <div class="admin-nav">
+      <button class="btn-admin-nav" onclick="showAdminTab('users')">👥 Utenti</button>
+      <button class="btn-admin-nav" onclick="showAdminTab('pwd')">🔑 Cambia password</button>
+      <button class="btn-admin-nav" onclick="goToApp()">📅 Vai all'App</button>
+      <button class="btn-admin-nav" onclick="doLogout()">Esci</button>
+    </div>
+  </div>
+
+  <div class="admin-main">
+
+    <!-- Tab Utenti -->
+    <div id="admin-tab-users">
+      <div class="admin-card">
+        <h3>➕ Aggiungi nuovo utente</h3>
+        <p style="font-size:0.82rem; color:var(--grigio); margin-bottom:1.2rem; line-height:1.6;">
+          Inserisci solo lo username. L'utente sceglierà la sua password al primo accesso.
+        </p>
+        <div class="add-user-form">
+          <div class="input-group">
+            <label>Username</label>
+            <input type="text" id="new-username" placeholder="Es. mario.rossi" />
+          </div>
+          <div class="input-group">
+            <label>Ruolo</label>
+            <select id="new-role">
+              <option value="user">Utente normale</option>
+              <option value="admin">Amministratore</option>
+            </select>
+          </div>
+          <div>
+            <button class="btn-add" onclick="addUser()">+ Aggiungi</button>
+          </div>
+        </div>
+        <div id="add-user-msg"></div>
+      </div>
+
+      <div class="admin-card">
+        <h3>👥 Utenti registrati</h3>
+        <div id="users-list-container">
+          <table class="users-table" id="users-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Ruolo</th>
+                <th>Password</th>
+                <th>Azione</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Cambia Password -->
+    <div id="admin-tab-pwd" style="display:none">
+      <div class="admin-card">
+        <h3>🔑 Cambia la tua password</h3>
+        <div class="change-pwd-form">
+          <div class="input-group">
+            <label>Nuova password</label>
+            <input type="password" id="new-pwd-1" placeholder="Minimo 6 caratteri" />
+          </div>
+          <div class="input-group">
+            <label>Conferma password</label>
+            <input type="password" id="new-pwd-2" placeholder="Ripeti password" />
+          </div>
+        </div>
+        <br>
+        <button class="btn-add" onclick="changeMyPassword()" style="max-width:200px;">Salva password</button>
+        <div id="change-pwd-msg" style="margin-top:0.8rem; font-size:0.82rem; padding:0.6rem 1rem; border-radius:6px; display:none;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== APP PRENOTAZIONE ===== -->
+<div id="app-screen">
+  <div class="top-bar">
+    <span>Connesso come: <strong id="topbar-username"></strong></span>
+    <button class="btn-topbar admin" id="btn-go-admin" onclick="showAdmin()" style="display:none;">⚙ Admin</button>
+    <button class="btn-topbar" onclick="doLogout()">Esci</button>
+  </div>
+
+  <header>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    </div>
+    <div>
+      <h1 id="header-name">Primo Incontro di Mediazione — Vicenza</h1>
+      <p>🔒 Area riservata — Accesso su invito del Mediatore Marino Cavestro</p>
+    </div>
+  </header>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress-fill" style="width:25%"></div>
+  </div>
+
+  <main>
+
+    <!-- STEPS -->
+    <div class="steps">
+      <div class="step active" id="step-1">
+        <div class="step-num">1</div>
+        <div class="step-label">Data</div>
+      </div>
+      <div class="step" id="step-2">
+        <div class="step-num">2</div>
+        <div class="step-label">Dati</div>
+      </div>
+      <div class="step" id="step-3">
+        <div class="step-num">3</div>
+        <div class="step-label">Conferma</div>
+      </div>
+    </div>
+
+    <!-- PANEL 1: LOADING + SLOTS -->
+    <div class="panel active" id="panel-1">
+      <div class="loading-box" id="loading-box">
+        <div class="spinner"></div>
+        <p>Controllo disponibilità calendario…</p>
+      </div>
+      <div id="slots-wrapper" style="display:none">
+        <p class="panel-title">Scegli una data</p>
+        <p class="panel-sub">Seleziona uno degli slot disponibili per il primo incontro di mediazione.</p>
+        <div class="card" id="slots-container"></div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: DATI PARTE -->
+    <div class="panel" id="panel-2">
+      <p class="panel-title">I tuoi dati</p>
+      <p class="panel-sub">Inserisci i dati richiesti per ricevere la conferma dell'appuntamento.</p>
+      <button class="btn btn-back" onclick="goTo(1)">← Cambia data</button>
+      <div class="card">
+        <div class="input-group">
+          <label>Nome e Cognome del richiedente</label>
+          <input type="text" id="input-nome" placeholder="Es. Mario Rossi" />
+        </div>
+        <div class="input-group">
+          <label>Indirizzo Email</label>
+          <input type="email" id="input-email" placeholder="mario.rossi@email.it" />
+        </div>
+        <div class="input-group">
+          <label>Nome della parte istante</label>
+          <input type="text" id="input-parte" placeholder="Es. Mario Rossi o Azienda Srl" />
+        </div>
+        <div class="input-group">
+          <label>Modalità dell'incontro</label>
+          <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; text-transform:none; letter-spacing:0; font-size:0.9rem; font-weight:500; color:var(--testo);">
+              <input type="radio" name="modalita" value="presenza" checked style="accent-color:var(--azzurro); width:16px; height:16px;"> In presenza
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; text-transform:none; letter-spacing:0; font-size:0.9rem; font-weight:500; color:var(--testo);">
+              <input type="radio" name="modalita" value="telematica" style="accent-color:var(--azzurro); width:16px; height:16px;"> Telematica
+            </label>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="goToSummary()">Continua →</button>
+        <div id="status-form" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- PANEL 3: RIEPILOGO -->
+    <div class="panel" id="panel-3">
+      <p class="panel-title">Conferma appuntamento</p>
+      <p class="panel-sub">Verifica i dettagli prima di confermare.</p>
+      <button class="btn btn-back" onclick="goTo(2)">← Modifica dati</button>
+      <div class="card">
+        <div class="summary-box" id="summary-box"></div>
+        <button class="btn btn-confirm" id="confirm-btn" onclick="confirmBooking()">✓ &nbsp;Conferma prenotazione</button>
+        <div id="status-confirm" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- PANEL 4: SUCCESSO -->
+    <div class="panel" id="panel-4">
+      <div class="success-box">
+        <div class="success-icon" style="background: linear-gradient(135deg, var(--azzurro), var(--celeste));">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 2L11 13"/>
+            <path d="M22 2L15 22 11 13 2 9l20-7z"/>
+          </svg>
+        </div>
+        <h2>Richiesta inviata!</h2>
+        <p>La tua richiesta è stata ricevuta.<br>Riceverai una <strong>email di conferma</strong> non appena il mediatore avrà approvato la data.</p>
+        <div class="event-confirm" id="success-detail"></div>
+        <button class="btn btn-primary" onclick="location.reload()" style="max-width:280px; margin:0 auto;">
+          ← Nuova prenotazione
+        </button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===== MODALE PASSWORD DIMENTICATA ===== -->
+<div id="forgot-modal" style="display:none; position:fixed; inset:0; background:rgba(26,74,122,0.5); z-index:9999; align-items:center; justify-content:center; padding:1.5rem;">
+  <div style="background:white; border-radius:14px; padding:2rem; width:100%; max-width:360px; box-shadow:0 20px 50px rgba(0,0,0,0.25); animation: fadeUp 0.3s ease;">
+    <h3 style="font-family:'Lora',serif; font-size:1.2rem; font-weight:400; color:var(--blu); margin-bottom:0.5rem;">Password dimenticata?</h3>
+    <p style="font-size:0.82rem; color:var(--grigio); line-height:1.65; margin-bottom:1.5rem;">
+      Invia una richiesta di reset al mediatore.<br>
+      <strong>Marino</strong> potrà reimpostare il tuo account dal pannello admin.
+    </p>
+    <div class="login-input-group">
+      <label>Il tuo username</label>
+      <input type="text" id="forgot-username" placeholder="Inserisci il tuo username" />
+    </div>
+    <div style="display:flex; gap:0.8rem; margin-top:0.5rem;">
+      <button onclick="sendForgotEmail()" style="flex:1; padding:0.8rem; background:linear-gradient(135deg,var(--blu),var(--azzurro)); color:white; border:none; border-radius:7px; font-family:'Raleway',sans-serif; font-size:0.82rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer;">Invia richiesta</button>
+      <button onclick="closeForgotModal()" style="padding:0.8rem 1.2rem; background:none; border:1.5px solid var(--bordo); border-radius:7px; font-family:'Raleway',sans-serif; font-size:0.82rem; color:var(--grigio); cursor:pointer;">Annulla</button>
+    </div>
+    <div id="forgot-msg" style="margin-top:0.8rem; font-size:0.8rem; padding:0.6rem 0.9rem; border-radius:6px; display:none;"></div>
+  </div>
+</div>
+
+<!-- ===== MODALE RICORDAMI ===== -->
+<div id="remember-modal" style="display:none; position:fixed; inset:0; background:rgba(26,74,122,0.5); z-index:9999; align-items:center; justify-content:center; padding:1.5rem;">
+  <div style="background:white; border-radius:14px; padding:2rem; width:100%; max-width:360px; box-shadow:0 20px 50px rgba(0,0,0,0.25); animation: fadeUp 0.3s ease; text-align:center;">
+    <div style="width:56px; height:56px; background:linear-gradient(135deg,var(--azzurro),var(--celeste)); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.2rem;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+      </svg>
+    </div>
+    <h3 style="font-family:'Lora',serif; font-size:1.15rem; font-weight:400; color:var(--blu); margin-bottom:0.8rem;">Solo su questo dispositivo</h3>
+    <p style="font-size:0.82rem; color:var(--grigio); line-height:1.7; margin-bottom:1.5rem;">
+      Attivando <strong style="color:var(--testo);">Ricordami</strong>, il tuo accesso verrà salvato <strong style="color:var(--testo);">solo su questo computer o telefono</strong>.<br><br>
+      Non dovrai reinserire la password alla prossima visita, ma <strong style="color:var(--testo);">solo su questo dispositivo</strong>. Su altri dispositivi sarà sempre richiesto il login.
+    </p>
+    <button onclick="closeRememberModal()" style="padding:0.75rem 2rem; background:linear-gradient(135deg,var(--blu),var(--azzurro)); color:white; border:none; border-radius:7px; font-family:'Raleway',sans-serif; font-size:0.82rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer;">Ho capito</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURAZIONE
+// ============================================================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf5LLBLXJZ36t6nmGhopgNXyxMWKtD1c2NaetOperZN2-DQltJa6ZZ8XTnJ0O7-2q1-g/exec';
+
+// Admin di default
+const DEFAULT_ADMIN = { username: 'marino', password: 'Lupo@2026', role: 'admin' };
+
+// ============================================================
+// GESTIONE UTENTI (localStorage)
+// ============================================================
+
+async function hashPassword(pwd) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(pwd + 'resolut_salt_2025');
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getUsers() {
+  const raw = localStorage.getItem('mediazione_users_v2');
+  return raw ? JSON.parse(raw) : null;
+}
+
+function saveUsers(users) {
+  localStorage.setItem('mediazione_users_v2', JSON.stringify(users));
+}
+
+async function initUsers() {
+  let users = getUsers();
+  if (!users) {
+    // Prima inizializzazione: crea utente admin di default
+    const hash = await hashPassword(DEFAULT_ADMIN.password);
+    users = [{ username: DEFAULT_ADMIN.username, hash: hash, role: 'admin' }];
+    saveUsers(users);
+  }
+  return users;
+}
+
+// ============================================================
+// SESSION
+// ============================================================
+let currentUser = null;
+
+function getSession() {
+  // Controlla prima localStorage (ricordami), poi sessionStorage
+  const persistent = localStorage.getItem('mediazione_session_remember');
+  if (persistent) return JSON.parse(persistent);
+  const raw = sessionStorage.getItem('mediazione_session');
+  return raw ? JSON.parse(raw) : null;
+}
+
+function setSession(user, remember) {
+  if (remember) {
+    localStorage.setItem('mediazione_session_remember', JSON.stringify(user));
+    sessionStorage.removeItem('mediazione_session');
+  } else {
+    sessionStorage.setItem('mediazione_session', JSON.stringify(user));
+    localStorage.removeItem('mediazione_session_remember');
+  }
+  currentUser = user;
+}
+
+function clearSession() {
+  sessionStorage.removeItem('mediazione_session');
+  localStorage.removeItem('mediazione_session_remember');
+  currentUser = null;
+}
+
+// ============================================================
+// LOGIN / LOGOUT
+// ============================================================
+
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const remember = document.getElementById('remember-me').checked;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!username) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ Inserisci il nome utente.';
+    return;
+  }
+
+  const users = await initUsers();
+  const user = users.find(u => u.username === username);
+
+  if (!user) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ Username non trovato.';
+    return;
+  }
+
+  // Primo accesso: nessuna password ancora impostata
+  if (!user.hash) {
+    if (password) {
+      errEl.style.display = 'block';
+      errEl.textContent = '⚠ È il tuo primo accesso: lascia il campo password vuoto e clicca Accedi.';
+      return;
+    }
+    showFirstLogin(user, remember);
+    return;
+  }
+
+  // Accesso normale
+  if (!password) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ Inserisci la password.';
+    return;
+  }
+
+  const hash = await hashPassword(password);
+  if (user.hash !== hash) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ Password non valida. Riprova.';
+    return;
+  }
+
+  setSession(user, remember);
+  if (user.role === 'admin') {
+    showAdmin();
+  } else {
+    goToApp();
+  }
+}
+
+function doLogout() {
+  clearSession();
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('firstlogin-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// ============================================================
+// NAVIGAZIONE TRA SCHERMATE
+// ============================================================
+
+function showAdmin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'block';
+  document.getElementById('admin-logged-name').textContent = currentUser.username;
+  showAdminTab('users');
+  renderUsersList();
+}
+
+function goToApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('topbar-username').textContent = currentUser.username;
+
+  if (currentUser.role === 'admin') {
+    document.getElementById('btn-go-admin').style.display = 'inline-block';
+  }
+
+  // Carica slots se necessario
+  if (!window._slotsLoaded) {
+    window._slotsLoaded = true;
+    loadSlots();
+  }
+}
+
+function showAdminTab(tab) {
+  document.getElementById('admin-tab-users').style.display = tab === 'users' ? 'block' : 'none';
+  document.getElementById('admin-tab-pwd').style.display = tab === 'pwd' ? 'block' : 'none';
+}
+
+function showRememberInfo() {
+  document.getElementById('remember-modal').style.display = 'flex';
+}
+
+function closeRememberModal() {
+  document.getElementById('remember-modal').style.display = 'none';
+}
+
+function togglePwd(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+function showForgotPassword() {
+  document.getElementById('forgot-username').value = '';
+  document.getElementById('forgot-msg').style.display = 'none';
+  const modal = document.getElementById('forgot-modal');
+  modal.style.display = 'flex';
+}
+
+function closeForgotModal() {
+  document.getElementById('forgot-modal').style.display = 'none';
+}
+
+function sendForgotEmail() {
+  const username = document.getElementById('forgot-username').value.trim();
+  const msgEl = document.getElementById('forgot-msg');
+  msgEl.style.display = 'none';
+
+  if (!username) {
+    msgEl.style.display = 'block';
+    msgEl.style.background = '#fdecea';
+    msgEl.style.color = 'var(--rosso)';
+    msgEl.textContent = '⚠ Inserisci il tuo username.';
+    return;
+  }
+
+  const subject = encodeURIComponent('Reset password — utente: ' + username);
+  const body = encodeURIComponent(
+    'Ciao Marino,\n\n' +
+    'L\'utente "' + username + '" ha dimenticato la password e richiede un reset.\n\n' +
+    'Puoi reimpostarlo dal pannello admin dell\'applicazione di prenotazione.\n\n' +
+    'Grazie.'
+  );
+  const mailtoLink = 'mailto:resolutia.vicenza@gmail.com?subject=' + subject + '&body=' + body;
+  window.location.href = mailtoLink;
+
+  msgEl.style.display = 'block';
+  msgEl.style.background = '#d5f5e3';
+  msgEl.style.color = 'var(--verde)';
+  msgEl.textContent = '✓ Si sta aprendo il tuo client email. Invia il messaggio a Marino.';
+}
+
+function resetUserPassword(username) {
+  if (!confirm('Vuoi azzerare la password di "' + username + '"?\nAl prossimo accesso potrà sceglierne una nuova.')) return;
+  let users = getUsers() || [];
+  users = users.map(u => u.username === username ? { ...u, hash: null } : u);
+  saveUsers(users);
+  renderUsersList();
+  // Mostra conferma
+  const msgEl = document.getElementById('add-user-msg');
+  showMsg(msgEl, '✓ Password di "' + username + '" azzerata. Potrà sceglierla al prossimo accesso.', 'success');
+}
+let firstLoginUser = null;
+let firstLoginRemember = false;
+
+function showFirstLogin(user, remember) {
+  firstLoginUser = user;
+  firstLoginRemember = remember || false;
+  document.getElementById('login-screen').style.display = 'none';
+  const fl = document.getElementById('firstlogin-screen');
+  fl.style.display = 'flex';
+  document.getElementById('firstlogin-name').textContent = user.username;
+  document.getElementById('firstlogin-error').style.display = 'none';
+  document.getElementById('firstlogin-pwd1').value = '';
+  document.getElementById('firstlogin-pwd2').value = '';
+}
+
+async function doSetFirstPassword() {
+  const p1 = document.getElementById('firstlogin-pwd1').value;
+  const p2 = document.getElementById('firstlogin-pwd2').value;
+  const errEl = document.getElementById('firstlogin-error');
+  errEl.style.display = 'none';
+
+  if (p1.length < 6) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ La password deve avere almeno 6 caratteri.';
+    return;
+  }
+  if (p1 !== p2) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ Le due password non coincidono.';
+    return;
+  }
+
+  const hash = await hashPassword(p1);
+  let users = getUsers() || [];
+  users = users.map(u => u.username === firstLoginUser.username ? { ...u, hash: hash } : u);
+  saveUsers(users);
+
+  const updatedUser = { ...firstLoginUser, hash: hash };
+  setSession(updatedUser, firstLoginRemember);
+  document.getElementById('firstlogin-screen').style.display = 'none';
+
+  if (updatedUser.role === 'admin') {
+    showAdmin();
+  } else {
+    goToApp();
+  }
+}
+
+// ============================================================
+// GESTIONE UTENTI (CRUD)
+// ============================================================
+
+function renderUsersList() {
+  const users = getUsers() || [];
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = '';
+
+  if (users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-users">Nessun utente registrato.</td></tr>';
+    return;
+  }
+
+  users.forEach(function(u) {
+    const tr = document.createElement('tr');
+    const isMe = u.username === currentUser.username;
+    const canDelete = !isMe;
+    const pwdStatus = u.hash
+      ? '<span style="color:var(--verde); font-size:0.75rem;">✓ Impostata</span>'
+      : '<span style="color:var(--arancio); font-size:0.75rem;">⏳ Primo accesso</span>';
+    const resetBtn = (u.hash && canDelete)
+      ? '<button class="btn-delete" onclick="resetUserPassword(\'' + escapeHtml(u.username) + '\')" style="border-color:#d4a017; color:#a07800; margin-right:0.4rem;" onmouseover="this.style.background=\'#a07800\';this.style.color=\'white\'" onmouseout="this.style.background=\'none\';this.style.color=\'#a07800\'">Reset pwd</button>'
+      : '';
+    tr.innerHTML =
+      '<td><strong>' + escapeHtml(u.username) + '</strong>' + (isMe ? ' <em style="color:var(--grigio);font-size:0.75rem;">(tu)</em>' : '') + '</td>' +
+      '<td><span class="badge badge-' + u.role + '">' + (u.role === 'admin' ? 'Admin' : 'Utente') + '</span></td>' +
+      '<td>' + pwdStatus + '</td>' +
+      '<td>' + resetBtn + (canDelete ? '<button class="btn-delete" onclick="deleteUser(\'' + escapeHtml(u.username) + '\')">Elimina</button>' : '<span style="color:var(--grigio);font-size:0.78rem;">—</span>') + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function addUser() {
+  const username = document.getElementById('new-username').value.trim();
+  const role = document.getElementById('new-role').value;
+  const msgEl = document.getElementById('add-user-msg');
+
+  msgEl.style.display = 'none';
+
+  if (!username) {
+    showMsg(msgEl, '⚠ Inserisci uno username.', 'error');
+    return;
+  }
+
+  const users = getUsers() || [];
+  if (users.find(u => u.username === username)) {
+    showMsg(msgEl, '⚠ Username già esistente.', 'error');
+    return;
+  }
+
+  // Nessuna password: l'utente la sceglierà al primo accesso
+  users.push({ username: username, hash: null, role: role });
+  saveUsers(users);
+
+  document.getElementById('new-username').value = '';
+  document.getElementById('new-role').value = 'user';
+
+  showMsg(msgEl, '✓ Utente "' + username + '" aggiunto. Potrà scegliere la password al primo accesso.', 'success');
+  renderUsersList();
+}
+
+function deleteUser(username) {
+  if (!confirm('Sei sicuro di voler eliminare l\'utente "' + username + '"?')) return;
+  let users = getUsers() || [];
+  users = users.filter(u => u.username !== username);
+  saveUsers(users);
+  renderUsersList();
+}
+
+async function changeMyPassword() {
+  const p1 = document.getElementById('new-pwd-1').value;
+  const p2 = document.getElementById('new-pwd-2').value;
+  const msgEl = document.getElementById('change-pwd-msg');
+  msgEl.style.display = 'none';
+
+  if (p1.length < 6) {
+    showMsg(msgEl, '⚠ La password deve avere almeno 6 caratteri.', 'error');
+    return;
+  }
+  if (p1 !== p2) {
+    showMsg(msgEl, '⚠ Le due password non coincidono.', 'error');
+    return;
+  }
+
+  const hash = await hashPassword(p1);
+  let users = getUsers() || [];
+  users = users.map(u => u.username === currentUser.username ? { ...u, hash: hash } : u);
+  saveUsers(users);
+
+  // Aggiorna sessione
+  currentUser = { ...currentUser, hash: hash };
+  setSession(currentUser);
+
+  document.getElementById('new-pwd-1').value = '';
+  document.getElementById('new-pwd-2').value = '';
+  showMsg(msgEl, '✓ Password aggiornata con successo.', 'success');
+}
+
+function showMsg(el, msg, type) {
+  el.style.display = 'block';
+  el.style.background = type === 'error' ? '#fdecea' : '#d5f5e3';
+  el.style.color = type === 'error' ? 'var(--rosso)' : 'var(--verde)';
+  el.textContent = msg;
+}
+
+// ============================================================
+// APP PRENOTAZIONE
+// ============================================================
+let allSlots = [];
+let selectedSlot = null;
+
+function loadSlots() {
+  fetch(SCRIPT_URL + '?action=getSlots')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.mediatore) {
+        document.getElementById('header-name').textContent = data.mediatore;
+      }
+      if (!data.ok) {
+        showLoadingError('Errore: ' + (data.error || 'Impossibile caricare gli slot.'));
+        return;
+      }
+      allSlots = data.slots || [];
+      renderSlots(allSlots);
+      document.getElementById('loading-box').style.display = 'none';
+      document.getElementById('slots-wrapper').style.display = 'block';
+    })
+    .catch(function() {
+      showLoadingError('Errore di connessione. Ricarica la pagina.');
+    });
+}
+
+function showLoadingError(msg) {
+  document.getElementById('loading-box').innerHTML =
+    '<p style="color:#c0392b; font-size:0.88rem;">' + msg + '</p>';
+}
+
+function renderSlots(slots) {
+  const container = document.getElementById('slots-container');
+  if (!slots || slots.length === 0) {
+    container.innerHTML = '<div class="no-slots">Nessuno slot disponibile nel periodo consentito.<br><strong>Contattaci direttamente</strong> per fissare un appuntamento.</div>';
+    return;
+  }
+
+  const mesi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+                'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  const groups = {};
+
+  slots.forEach(function(slot) {
+    const d = new Date(slot.start);
+    const key = mesi[d.getMonth()] + ' ' + d.getFullYear();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(slot);
+  });
+
+  container.innerHTML = '';
+  Object.keys(groups).forEach(function(month) {
+    const mg = document.createElement('div');
+    mg.className = 'month-group';
+    mg.innerHTML = '<div class="month-label">' + month + '</div>';
+
+    groups[month].forEach(function(slot) {
+      const parts = slot.display.split(' — ');
+      const dayPart = parts[0] || slot.display;
+      const timePart = parts[1] || '';
+
+      const el = document.createElement('div');
+      el.className = 'slot-item';
+      el.innerHTML =
+        '<div>' +
+          '<div class="slot-day">' + dayPart + '</div>' +
+          '<div class="slot-time">' + timePart + '</div>' +
+        '</div>' +
+        '<div class="slot-arrow">→</div>';
+
+      el.onclick = function() { selectSlot(slot, el); };
+      mg.appendChild(el);
+    });
+
+    container.appendChild(mg);
+  });
+}
+
+function selectSlot(slot, el) {
+  document.querySelectorAll('.slot-item').forEach(function(s) {
+    s.classList.remove('selected');
+  });
+  el.classList.add('selected');
+  selectedSlot = slot;
+  setTimeout(function() { goTo(2); }, 300);
+}
+
+function goToSummary() {
+  const nome = document.getElementById('input-nome').value.trim();
+  const email = document.getElementById('input-email').value.trim();
+  const parte = document.getElementById('input-parte').value.trim();
+  const modalita = document.querySelector('input[name="modalita"]:checked').value;
+  const modalitaStr = modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)';
+  const status = document.getElementById('status-form');
+
+  if (!nome) { showError(status, 'Inserisci il tuo nome e cognome.'); return; }
+  if (!email || !email.includes('@')) { showError(status, 'Inserisci un indirizzo email valido.'); return; }
+  if (!parte) { showError(status, 'Inserisci il nome della parte istante.'); return; }
+  status.style.display = 'none';
+
+  const parts = selectedSlot.display.split(' — ');
+  document.getElementById('summary-box').innerHTML =
+    row('Data', parts[0] || selectedSlot.display) +
+    row('Orario', parts[1] || '') +
+    row('Durata', '2 ore') +
+    row('Richiedente', nome) +
+    row('Email', email) +
+    row('Parte istante', parte) +
+    row('Modalità', modalitaStr);
+
+  goTo(3);
+}
+
+function row(label, value) {
+  return '<div class="summary-row"><span class="summary-label">' + label + '</span><span class="summary-value">' + value + '</span></div>';
+}
+
+function confirmBooking() {
+  const btn = document.getElementById('confirm-btn');
+  const status = document.getElementById('status-confirm');
+  const nome = document.getElementById('input-nome').value.trim();
+  const email = document.getElementById('input-email').value.trim();
+  const parte = document.getElementById('input-parte').value.trim();
+  const modalita = document.querySelector('input[name="modalita"]:checked').value;
+  const modalitaStr = modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)';
+
+  btn.disabled = true;
+  status.className = 'status-msg loading';
+  status.innerHTML = '<div class="mini-spin"></div> Creazione appuntamento in corso…';
+
+  const url = SCRIPT_URL +
+    '?action=book' +
+    '&start=' + encodeURIComponent(selectedSlot.start) +
+    '&end=' + encodeURIComponent(selectedSlot.end) +
+    '&nome=' + encodeURIComponent(nome) +
+    '&email=' + encodeURIComponent(email) +
+    '&parteIstante=' + encodeURIComponent(parte) +
+    '&modalita=' + encodeURIComponent(modalita);
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        document.getElementById('success-detail').innerHTML =
+          '📅 ' + selectedSlot.display + '<br>' +
+          '👤 ' + nome + '<br>' +
+          '✉️ ' + email + '<br>' +
+          '⚖️ Parte istante: ' + parte + '<br>' +
+          '📍 Modalità: ' + modalitaStr;
+        goTo(4);
+      } else {
+        showError(status, data.error || 'Errore nella prenotazione. Riprova.');
+        btn.disabled = false;
+      }
+    })
+    .catch(function() {
+      showError(status, 'Errore di rete. Riprova più tardi.');
+      btn.disabled = false;
+    });
+}
+
+function goTo(n) {
+  document.querySelectorAll('.panel').forEach(function(p, i) {
+    p.classList.toggle('active', i === n - 1);
+  });
+
+  for (var i = 1; i <= 3; i++) {
+    var el = document.getElementById('step-' + i);
+    if (!el) continue;
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+
+  var pct = Math.min(n * 25, 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showError(el, msg) {
+  el.className = 'status-msg error';
+  el.innerHTML = '⚠ ' + msg;
+}
+
+// ============================================================
+// AVVIO
+// ============================================================
+window.onload = async function() {
+  await initUsers(); // Inizializza utenti di default se necessario
+
+  // Controlla se c'è già una sessione attiva
+  const session = getSession();
+  if (session) {
+    currentUser = session;
+    if (session.role === 'admin') {
+      showAdmin();
+    } else {
+      goToApp();
+    }
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+
+  // Permetti login con INVIO
+  document.getElementById('login-password').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('login-username').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('login-password').focus();
+  });
+};
+</script>
+</body>
+</html>
