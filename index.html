@@ -1037,8 +1037,8 @@
           <input type="email" id="input-email" placeholder="mario.rossi@email.it" />
         </div>
         <div class="input-group">
-          <label>Nome della parte istante</label>
-          <input type="text" id="input-parte" placeholder="Es. Mario Rossi o Azienda Srl" />
+          <label>Nome parte o N° mediazione</label>
+          <input type="text" id="input-parte" placeholder="Es. Mario Rossi o N° 123/2025" />
         </div>
         <div class="input-group">
           <label>Modalità dell'incontro</label>
@@ -1636,7 +1636,7 @@ function goToSummary() {
     row('Durata', '2 ore') +
     row('Richiedente', nome) +
     row('Email', email) +
-    row('Parte istante', parte) +
+    row('Parte / N° mediazione', parte) +
     row('Modalità', modalitaStr);
 
   goTo(3);
@@ -1676,7 +1676,7 @@ function confirmBooking() {
           '📅 ' + selectedSlot.display + '<br>' +
           '👤 ' + nome + '<br>' +
           '✉️ ' + email + '<br>' +
-          '⚖️ Parte istante: ' + parte + '<br>' +
+          '⚖️ Parte / N° mediazione: ' + parte + '<br>' +
           '📍 Modalità: ' + modalitaStr;
         goTo(4);
       } else {
