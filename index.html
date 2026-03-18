@@ -324,8 +324,9 @@
     text-transform: uppercase;
   }
 
-  .badge-admin { background: rgba(26,74,122,0.1); color: var(--blu); }
-  .badge-user  { background: rgba(41,128,185,0.1); color: var(--azzurro); }
+  .badge-admin     { background: rgba(26,74,122,0.1);  color: var(--blu); }
+  .badge-mediatore { background: rgba(26,122,94,0.12);  color: var(--verde); }
+  .badge-user      { background: rgba(41,128,185,0.1);  color: var(--azzurro); }
 
   .btn-delete {
     padding: 0.3rem 0.7rem;
@@ -915,7 +916,8 @@
           <div class="input-group">
             <label>Ruolo</label>
             <select id="new-role">
-              <option value="user">Utente normale</option>
+              <option value="user">Utente (avvocato/studio)</option>
+              <option value="mediatore">Mediatore</option>
               <option value="admin">Amministratore</option>
             </select>
           </div>
@@ -1742,7 +1744,7 @@ function renderUsersList() {
         var td2 = document.createElement('td');
         var badge = document.createElement('span');
         badge.className = 'badge badge-' + u.role;
-        badge.textContent = u.role === 'admin' ? 'Admin' : 'Utente';
+        badge.textContent = u.role === 'admin' ? 'Admin' : u.role === 'mediatore' ? 'Mediatore' : 'Utente';
         td2.appendChild(badge);
 
         // Cella 3: password
