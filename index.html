@@ -1159,6 +1159,7 @@
 <div id="app-screen">
   <div class="top-bar">
     <span>Connesso come: <strong id="topbar-username"></strong></span>
+    <button class="btn-topbar" id="btn-mie-prenotazioni" onclick="toggleMiePrenotazioni()">📋 Le mie prenotazioni</button>
     <button class="btn-topbar admin" id="btn-go-admin" onclick="showAdmin()" style="display:none;">⚙ Admin</button>
     <button class="btn-topbar" onclick="doLogout()">Esci</button>
   </div>
@@ -1198,6 +1199,16 @@
         <div class="step-num">3</div>
         <div class="step-label">Conferma</div>
       </div>
+    </div>
+
+    <!-- PANNELLO LE MIE PRENOTAZIONI -->
+    <div id="panel-mie-prenotazioni" style="display:none;">
+      <p class="panel-title">Le mie prenotazioni</p>
+      <p class="panel-sub">Tutte le prenotazioni effettuate con il tuo account.</p>
+      <div class="card" id="mie-prenotazioni-container">
+        <div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.88rem;">Caricamento...</div>
+      </div>
+      <button class="btn btn-back" onclick="toggleMiePrenotazioni()" style="margin-top:1rem;">← Torna alla prenotazione</button>
     </div>
 
     <!-- PANEL 1: LOADING + SLOTS -->
@@ -1963,7 +1974,8 @@ function confirmBooking() {
     '&email='        + encodeURIComponent(email) +
     '&parteIstante=' + encodeURIComponent(parte) +
     '&modalita='     + encodeURIComponent(modalita) +
-    '&rg='           + encodeURIComponent(rg);
+    '&rg='           + encodeURIComponent(rg) +
+    '&username='     + encodeURIComponent(currentUser ? currentUser.username : '');
 
   fetch(url)
     .then(function(r) { return r.json(); })
@@ -2152,13 +2164,15 @@ function adminConfirmBooking() {
 
   var url = SCRIPT_URL +
     '?action=bookAdmin' +
+    '&username='     + encodeURIComponent(currentUser ? currentUser.username : '') +
     '&start='        + encodeURIComponent(adminSelectedSlot.start) +
     '&end='          + encodeURIComponent(adminSelectedSlot.end) +
     '&nome='         + encodeURIComponent(nome) +
     '&email='        + encodeURIComponent(email) +
     '&parteIstante=' + encodeURIComponent(parte || rg) +
     '&modalita='     + encodeURIComponent(modalita) +
-    '&rg='           + encodeURIComponent(rg);
+    '&rg='           + encodeURIComponent(rg) +
+    '&username='     + encodeURIComponent(currentUser ? currentUser.username : '');
 
   fetch(url)
     .then(function(r) { return r.json(); })
@@ -2313,6 +2327,72 @@ function saveConfig() {
       msg.style.background = '#fdecea';
       msg.style.color = 'var(--rosso)';
       msg.textContent = '⚠ Errore di rete.';
+    });
+}
+
+// ============================================================
+// LE MIE PRENOTAZIONI
+// ============================================================
+var _miePrenotazioniVisible = false;
+
+function toggleMiePrenotazioni() {
+  _miePrenotazioniVisible = !_miePrenotazioniVisible;
+  var panel = document.getElementById('panel-mie-prenotazioni');
+  if (_miePrenotazioniVisible) {
+    // Nascondi tutti i pannelli prenotazione
+    document.querySelectorAll('.panel').forEach(function(p) { p.style.display = 'none'; });
+    panel.style.display = 'block';
+    document.getElementById('btn-mie-prenotazioni').textContent = '← Nuova prenotazione';
+    caricaMiePrenotazioni();
+  } else {
+    panel.style.display = 'none';
+    // Ripristina il pannello corrente
+    document.querySelectorAll('.panel').forEach(function(p, i) {
+      p.style.display = (i === 0) ? 'block' : 'none';
+    });
+    goTo(1);
+    document.getElementById('btn-mie-prenotazioni').textContent = '📋 Le mie prenotazioni';
+  }
+}
+
+function caricaMiePrenotazioni() {
+  var container = document.getElementById('mie-prenotazioni-container');
+  container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.88rem;">Caricamento...</div>';
+
+  if (!currentUser) return;
+
+  fetch(SCRIPT_URL + '?action=getMiePrenotazioni&username=' + encodeURIComponent(currentUser.username))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok || !data.prenotazioni || data.prenotazioni.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;color:var(--grigio);font-size:0.88rem;">Nessuna prenotazione trovata.</div>';
+        return;
+      }
+      container.innerHTML = '';
+      data.prenotazioni.forEach(function(p) {
+        var statoColor = p.stato === 'CONFERMATO' ? 'var(--verde)' : p.stato === 'CANCELLATO' ? 'var(--rosso)' : 'var(--arancio)';
+        var statoTesto = p.stato === 'CONFERMATO' ? '✅ Confermato' : p.stato === 'CANCELLATO' ? '❌ Cancellato' : '⏳ In attesa';
+        var div = document.createElement('div');
+        div.style.cssText = 'padding:1rem 0;border-bottom:1px solid var(--bordo);';
+        div.innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">' +
+            '<div>' +
+              '<div style="font-weight:600;color:var(--blu);font-size:0.92rem;">' + (p.data || '') + '</div>' +
+              '<div style="font-size:0.82rem;color:var(--grigio);margin-top:0.2rem;">' + (p.parte || p.richiedente) + (p.rg ? ' · R.G. ' + p.rg : '') + '</div>' +
+              '<div style="font-size:0.8rem;color:var(--grigio);margin-top:0.15rem;">' + (p.modalita || '') + (p.meetLink ? ' · <a href="' + p.meetLink + '" target="_blank" style="color:var(--verde);">Meet</a>' : '') + '</div>' +
+            '</div>' +
+            '<span style="font-size:0.75rem;font-weight:600;color:' + statoColor + ';white-space:nowrap;">' + statoTesto + '</span>' +
+          '</div>';
+        var last = container.querySelectorAll('div[style*="border-bottom"]');
+        if (last.length > 0) last[last.length-1].style.borderBottom = '1px solid var(--bordo)';
+        container.appendChild(div);
+      });
+      // Remove border from last item
+      var items = container.querySelectorAll('div[style*="border-bottom"]');
+      if (items.length > 0) items[items.length-1].style.borderBottom = 'none';
+    })
+    .catch(function() {
+      container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.88rem;">Errore nel caricamento.</div>';
     });
 }
 
