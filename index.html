@@ -1023,7 +1023,7 @@
     </div>
 
     <!-- PANEL 2: DATI PARTE -->
-    <div class="panel" id="panel-2">
+<div class="panel" id="panel-2">
       <p class="panel-title">I tuoi dati</p>
       <p class="panel-sub">Inserisci i dati richiesti per ricevere la conferma dell'appuntamento.</p>
       <button class="btn btn-back" onclick="goTo(1)">← Cambia data</button>
@@ -1036,19 +1036,32 @@
           <label>Indirizzo Email</label>
           <input type="email" id="input-email" placeholder="mario.rossi@email.it" />
         </div>
-        <div class="input-group">
-          <label>Nome della parte istante</label>
-          <input type="text" id="input-parte" placeholder="Es. Mario Rossi o Azienda Srl" />
+
+        <!-- R.G. e Parte: alternativi -->
+        <div style="background:var(--cielo); border:1px solid var(--bordo); border-radius:8px; padding:1.2rem 1.4rem; margin-bottom:1.2rem;">
+          <p style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:1rem;">Identifica la procedura</p>
+
+          <div class="input-group" style="margin-bottom:0.8rem;">
+            <label>
+              Numero R.G.
+              <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em; margin-left:0.3rem;">— se hai già depositato la domanda</span>
+            </label>
+            <input type="text" id="input-rg" placeholder="Es. 123/2024"
+              style="text-transform:uppercase; letter-spacing:0.04em;"
+              oninput="this.value=this.value.toUpperCase(); sincronizzaCampi();" />
+          </div>
+
+          <div style="text-align:center; color:var(--grigio); font-size:0.78rem; margin:0.6rem 0; letter-spacing:0.05em; text-transform:uppercase;">oppure</div>
+
+          <div class="input-group" id="gruppo-parte" style="margin-bottom:0;">
+            <label>Nome della parte istante
+              <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em; margin-left:0.3rem;">— se non hai ancora il numero R.G.</span>
+            </label>
+            <input type="text" id="input-parte" placeholder="Es. Mario Rossi o Azienda Srl"
+              oninput="sincronizzaCampi();" />
+          </div>
         </div>
-        <div class="input-group">
-          <label>
-            Numero R.G.
-            <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em; margin-left:0.3rem;">(facoltativo — se hai già depositato la domanda)</span>
-          </label>
-          <input type="text" id="input-rg" placeholder="Es. 123/2024"
-            style="text-transform:uppercase; letter-spacing:0.04em;"
-            oninput="this.value=this.value.toUpperCase()" />
-        </div>
+
         <div class="input-group">
           <label>Modalità dell'incontro</label>
           <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
@@ -1636,7 +1649,7 @@ function goToSummary() {
 
   if (!nome)  { showError(status, 'Inserisci il tuo nome e cognome.'); return; }
   if (!email || !email.includes('@')) { showError(status, 'Inserisci un indirizzo email valido.'); return; }
-  if (!parte) { showError(status, 'Inserisci il nome della parte istante.'); return; }
+  if (!rg && !parte) { showError(status, 'Inserisci il numero R.G. oppure il nome della parte istante.'); return; }
   status.style.display = 'none';
 
   const parts = selectedSlot.display.split(' — ');
@@ -1725,6 +1738,28 @@ function goTo(n) {
 function showError(el, msg) {
   el.className = 'status-msg error';
   el.innerHTML = '⚠ ' + msg;
+}
+
+// ============================================================
+// SINCRONIZZAZIONE CAMPI R.G. / PARTE (alternativi)
+// ============================================================
+function sincronizzaCampi() {
+  var rgVal    = document.getElementById('input-rg').value.trim();
+  var parteEl  = document.getElementById('input-parte');
+  var gruppoEl = document.getElementById('gruppo-parte');
+
+  if (rgVal.length > 0) {
+    // R.G. compilato → disabilita e svuota campo parte
+    parteEl.value = '';
+    parteEl.disabled = true;
+    parteEl.placeholder = 'Non necessario — R.G. già inserito';
+    gruppoEl.style.opacity = '0.45';
+  } else {
+    // R.G. vuoto → riabilita campo parte
+    parteEl.disabled = false;
+    parteEl.placeholder = 'Es. Mario Rossi o Azienda Srl';
+    gruppoEl.style.opacity = '1';
+  }
 }
 
 // ============================================================
