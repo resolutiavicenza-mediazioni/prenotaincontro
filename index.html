@@ -1590,6 +1590,8 @@ function resetUserPassword(username) {
   users = users.map(u => u.username === username ? { ...u, hash: null } : u);
   saveUsers(users);
   renderUsersList();
+  // Sincronizza con Google Sheet
+  fetch(SCRIPT_URL + '?action=resetUser&username=' + encodeURIComponent(username)).catch(function(){});
   // Mostra conferma
   const msgEl = document.getElementById('add-user-msg');
   showMsg(msgEl, '✓ Password di "' + username + '" azzerata. Potrà sceglierla al prossimo accesso.', 'success');
@@ -1697,9 +1699,14 @@ async function addUser() {
     return;
   }
 
-  // Nessuna password: l'utente la sceglierà al primo accesso
+  // Salva in localStorage
   users.push({ username: username, hash: null, role: role });
   saveUsers(users);
+
+  // Sincronizza con Google Sheet
+  try {
+    await fetch(SCRIPT_URL + '?action=addUser&username=' + encodeURIComponent(username) + '&role=' + encodeURIComponent(role));
+  } catch(e) {}
 
   document.getElementById('new-username').value = '';
   document.getElementById('new-role').value = 'user';
@@ -1714,6 +1721,7 @@ function deleteUser(username) {
   users = users.filter(u => u.username !== username);
   saveUsers(users);
   renderUsersList();
+  fetch(SCRIPT_URL + '?action=deleteUser&username=' + encodeURIComponent(username)).catch(function(){});
 }
 
 async function changeMyPassword() {
