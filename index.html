@@ -821,7 +821,7 @@
 
     <div class="login-input-group">
       <label>Nome utente</label>
-      <input type="text" id="login-username" placeholder="Inserisci username" autocomplete="username" autocorrect="off" autocapitalize="none" spellcheck="false" />
+      <input type="text" id="login-username" placeholder="Inserisci username" autocomplete="username" />
     </div>
     <div class="login-input-group">
       <label>Password</label>
@@ -1037,8 +1037,17 @@
           <input type="email" id="input-email" placeholder="mario.rossi@email.it" />
         </div>
         <div class="input-group">
-          <label>Nome parte o N° mediazione</label>
-          <input type="text" id="input-parte" placeholder="Es. Mario Rossi o N° 123/2025" />
+          <label>Nome della parte istante</label>
+          <input type="text" id="input-parte" placeholder="Es. Mario Rossi o Azienda Srl" />
+        </div>
+        <div class="input-group">
+          <label>
+            Numero R.G.
+            <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em; margin-left:0.3rem;">(facoltativo — se hai già depositato la domanda)</span>
+          </label>
+          <input type="text" id="input-rg" placeholder="Es. 123/2024"
+            style="text-transform:uppercase; letter-spacing:0.04em;"
+            oninput="this.value=this.value.toUpperCase()" />
         </div>
         <div class="input-group">
           <label>Modalità dell'incontro</label>
@@ -1099,7 +1108,7 @@
     </p>
     <div class="login-input-group">
       <label>Il tuo username</label>
-      <input type="text" id="forgot-username" placeholder="Inserisci il tuo username" autocorrect="off" autocapitalize="none" spellcheck="false" />
+      <input type="text" id="forgot-username" placeholder="Inserisci il tuo username" />
     </div>
     <div style="display:flex; gap:0.8rem; margin-top:0.5rem;">
       <button onclick="sendForgotEmail()" style="flex:1; padding:0.8rem; background:linear-gradient(135deg,var(--blu),var(--azzurro)); color:white; border:none; border-radius:7px; font-family:'Raleway',sans-serif; font-size:0.82rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer;">Invia richiesta</button>
@@ -1132,9 +1141,13 @@
 // ============================================================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwf5LLBLXJZ36t6nmGhopgNXyxMWKtD1c2NaetOperZN2-DQltJa6ZZ8XTnJ0O7-2q1-g/exec';
 
+// Admin di default
+const DEFAULT_ADMIN = { username: 'marino', password: 'Lupo@2026', role: 'admin' };
+
 // ============================================================
-// HASH PASSWORD (lato client — non viene mai inviata in chiaro)
+// GESTIONE UTENTI (localStorage)
 // ============================================================
+
 async function hashPassword(pwd) {
   const encoder = new TextEncoder();
   const data = encoder.encode(pwd + 'resolut_salt_2025');
@@ -1143,21 +1156,33 @@ async function hashPassword(pwd) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ============================================================
-// API UTENTI (Google Sheets via Apps Script)
-// ============================================================
-async function apiCall(params) {
-  const url = SCRIPT_URL + '?' + Object.entries(params).map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
-  const res = await fetch(url);
-  return await res.json();
+function getUsers() {
+  const raw = localStorage.getItem('mediazione_users_v2');
+  return raw ? JSON.parse(raw) : null;
+}
+
+function saveUsers(users) {
+  localStorage.setItem('mediazione_users_v2', JSON.stringify(users));
+}
+
+async function initUsers() {
+  let users = getUsers();
+  if (!users) {
+    // Prima inizializzazione: crea utente admin di default
+    const hash = await hashPassword(DEFAULT_ADMIN.password);
+    users = [{ username: DEFAULT_ADMIN.username, hash: hash, role: 'admin' }];
+    saveUsers(users);
+  }
+  return users;
 }
 
 // ============================================================
-// SESSION (resta in locale — solo dati di sessione)
+// SESSION
 // ============================================================
 let currentUser = null;
 
 function getSession() {
+  // Controlla prima localStorage (ricordami), poi sessionStorage
   const persistent = localStorage.getItem('mediazione_session_remember');
   if (persistent) return JSON.parse(persistent);
   const raw = sessionStorage.getItem('mediazione_session');
@@ -1165,15 +1190,14 @@ function getSession() {
 }
 
 function setSession(user, remember) {
-  const sessionData = { username: user.username, role: user.role };
   if (remember) {
-    localStorage.setItem('mediazione_session_remember', JSON.stringify(sessionData));
+    localStorage.setItem('mediazione_session_remember', JSON.stringify(user));
     sessionStorage.removeItem('mediazione_session');
   } else {
-    sessionStorage.setItem('mediazione_session', JSON.stringify(sessionData));
+    sessionStorage.setItem('mediazione_session', JSON.stringify(user));
     localStorage.removeItem('mediazione_session_remember');
   }
-  currentUser = sessionData;
+  currentUser = user;
 }
 
 function clearSession() {
@@ -1199,60 +1223,45 @@ async function doLogin() {
     return;
   }
 
-  // Mostra spinner nel bottone
-  const btn = document.querySelector('#login-screen .btn-login');
-  btn.textContent = '…';
-  btn.disabled = true;
+  const users = await initUsers();
+  const user = users.find(u => u.username === username);
 
-  try {
-    const data = await apiCall({ action: 'checkLogin', username: username });
-
-    if (!data.found) {
-      errEl.style.display = 'block';
-      errEl.textContent = '⚠ Username non trovato.';
-      return;
-    }
-
-    // Primo accesso: nessuna password impostata
-    if (!data.hasPassword) {
-      if (password) {
-        errEl.style.display = 'block';
-        errEl.textContent = '⚠ Primo accesso: lascia la password vuota e clicca Accedi.';
-        return;
-      }
-      showFirstLogin({ username: data.username, role: data.role }, remember);
-      return;
-    }
-
-    // Accesso normale: verifica hash
-    if (!password) {
-      errEl.style.display = 'block';
-      errEl.textContent = '⚠ Inserisci la password.';
-      return;
-    }
-
-    const hash = await hashPassword(password);
-    const loginRes = await apiCall({ action: 'login', username: username, hash: hash });
-
-    if (!loginRes.ok) {
-      errEl.style.display = 'block';
-      errEl.textContent = '⚠ Password non valida. Riprova.';
-      return;
-    }
-
-    setSession({ username: loginRes.username, role: loginRes.role }, remember);
-    if (loginRes.role === 'admin') {
-      showAdmin();
-    } else {
-      goToApp();
-    }
-
-  } catch(e) {
+  if (!user) {
     errEl.style.display = 'block';
-    errEl.textContent = '⚠ Errore di connessione. Riprova.';
-  } finally {
-    btn.textContent = 'Accedi →';
-    btn.disabled = false;
+    errEl.textContent = '⚠ Username non trovato.';
+    return;
+  }
+
+  // Primo accesso: nessuna password ancora impostata
+  if (!user.hash) {
+    if (password) {
+      errEl.style.display = 'block';
+      errEl.textContent = '⚠ È il tuo primo accesso: lascia il campo password vuoto e clicca Accedi.';
+      return;
+    }
+    showFirstLogin(user, remember);
+    return;
+  }
+
+  // Accesso normale
+  if (!password) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ Inserisci la password.';
+    return;
+  }
+
+  const hash = await hashPassword(password);
+  if (user.hash !== hash) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ Password non valida. Riprova.';
+    return;
+  }
+
+  setSession(user, remember);
+  if (user.role === 'admin') {
+    showAdmin();
+  } else {
+    goToApp();
   }
 }
 
@@ -1285,9 +1294,12 @@ function goToApp() {
   document.getElementById('admin-screen').style.display = 'none';
   document.getElementById('app-screen').style.display = 'block';
   document.getElementById('topbar-username').textContent = currentUser.username;
+
   if (currentUser.role === 'admin') {
     document.getElementById('btn-go-admin').style.display = 'inline-block';
   }
+
+  // Carica slots se necessario
   if (!window._slotsLoaded) {
     window._slotsLoaded = true;
     loadSlots();
@@ -1321,7 +1333,8 @@ function togglePwd(inputId, btn) {
 function showForgotPassword() {
   document.getElementById('forgot-username').value = '';
   document.getElementById('forgot-msg').style.display = 'none';
-  document.getElementById('forgot-modal').style.display = 'flex';
+  const modal = document.getElementById('forgot-modal');
+  modal.style.display = 'flex';
 }
 
 function closeForgotModal() {
@@ -1332,6 +1345,7 @@ function sendForgotEmail() {
   const username = document.getElementById('forgot-username').value.trim();
   const msgEl = document.getElementById('forgot-msg');
   msgEl.style.display = 'none';
+
   if (!username) {
     msgEl.style.display = 'block';
     msgEl.style.background = '#fdecea';
@@ -1339,18 +1353,33 @@ function sendForgotEmail() {
     msgEl.textContent = '⚠ Inserisci il tuo username.';
     return;
   }
+
   const subject = encodeURIComponent('Reset password — utente: ' + username);
-  const body = encodeURIComponent('Ciao Marino,\n\nL\'utente "' + username + '" ha dimenticato la password e richiede un reset.\n\nPuoi reimpostarlo dal pannello admin.\n\nGrazie.');
-  window.location.href = 'mailto:resolutia.vicenza@gmail.com?subject=' + subject + '&body=' + body;
+  const body = encodeURIComponent(
+    'Ciao Marino,\n\n' +
+    'L\'utente "' + username + '" ha dimenticato la password e richiede un reset.\n\n' +
+    'Puoi reimpostarlo dal pannello admin dell\'applicazione di prenotazione.\n\n' +
+    'Grazie.'
+  );
+  const mailtoLink = 'mailto:resolutia.vicenza@gmail.com?subject=' + subject + '&body=' + body;
+  window.location.href = mailtoLink;
+
   msgEl.style.display = 'block';
   msgEl.style.background = '#d5f5e3';
   msgEl.style.color = 'var(--verde)';
-  msgEl.textContent = '✓ Si sta aprendo il tuo client email.';
+  msgEl.textContent = '✓ Si sta aprendo il tuo client email. Invia il messaggio a Marino.';
 }
 
-// ============================================================
-// PRIMO ACCESSO
-// ============================================================
+function resetUserPassword(username) {
+  if (!confirm('Vuoi azzerare la password di "' + username + '"?\nAl prossimo accesso potrà sceglierne una nuova.')) return;
+  let users = getUsers() || [];
+  users = users.map(u => u.username === username ? { ...u, hash: null } : u);
+  saveUsers(users);
+  renderUsersList();
+  // Mostra conferma
+  const msgEl = document.getElementById('add-user-msg');
+  showMsg(msgEl, '✓ Password di "' + username + '" azzerata. Potrà sceglierla al prossimo accesso.', 'success');
+}
 let firstLoginUser = null;
 let firstLoginRemember = false;
 
@@ -1358,7 +1387,8 @@ function showFirstLogin(user, remember) {
   firstLoginUser = user;
   firstLoginRemember = remember || false;
   document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('firstlogin-screen').style.display = 'flex';
+  const fl = document.getElementById('firstlogin-screen');
+  fl.style.display = 'flex';
   document.getElementById('firstlogin-name').textContent = user.username;
   document.getElementById('firstlogin-error').style.display = 'none';
   document.getElementById('firstlogin-pwd1').value = '';
@@ -1371,99 +1401,105 @@ async function doSetFirstPassword() {
   const errEl = document.getElementById('firstlogin-error');
   errEl.style.display = 'none';
 
-  if (p1.length < 6) { errEl.style.display = 'block'; errEl.textContent = '⚠ La password deve avere almeno 6 caratteri.'; return; }
-  if (p1 !== p2)      { errEl.style.display = 'block'; errEl.textContent = '⚠ Le due password non coincidono.'; return; }
-
-  const btn = document.querySelector('#firstlogin-screen .btn-login');
-  btn.textContent = '…'; btn.disabled = true;
-
-  try {
-    const hash = await hashPassword(p1);
-    const res = await apiCall({ action: 'setPassword', username: firstLoginUser.username, hash: hash });
-    if (!res.ok) { errEl.style.display = 'block'; errEl.textContent = '⚠ Errore salvataggio. Riprova.'; return; }
-    setSession(firstLoginUser, firstLoginRemember);
-    document.getElementById('firstlogin-screen').style.display = 'none';
-    if (firstLoginUser.role === 'admin') { showAdmin(); } else { goToApp(); }
-  } catch(e) {
+  if (p1.length < 6) {
     errEl.style.display = 'block';
-    errEl.textContent = '⚠ Errore di connessione. Riprova.';
-  } finally {
-    btn.textContent = 'Salva e accedi →'; btn.disabled = false;
+    errEl.textContent = '⚠ La password deve avere almeno 6 caratteri.';
+    return;
+  }
+  if (p1 !== p2) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ Le due password non coincidono.';
+    return;
+  }
+
+  const hash = await hashPassword(p1);
+  let users = getUsers() || [];
+  users = users.map(u => u.username === firstLoginUser.username ? { ...u, hash: hash } : u);
+  saveUsers(users);
+
+  const updatedUser = { ...firstLoginUser, hash: hash };
+  setSession(updatedUser, firstLoginRemember);
+  document.getElementById('firstlogin-screen').style.display = 'none';
+
+  if (updatedUser.role === 'admin') {
+    showAdmin();
+  } else {
+    goToApp();
   }
 }
 
 // ============================================================
-// GESTIONE UTENTI (CRUD via API)
+// GESTIONE UTENTI (CRUD)
 // ============================================================
 
-async function renderUsersList() {
+function renderUsersList() {
+  const users = getUsers() || [];
   const tbody = document.getElementById('users-tbody');
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:1.5rem; color:var(--grigio); font-size:0.82rem;"><div class="mini-spin" style="display:inline-block; margin-right:0.5rem;"></div>Caricamento utenti…</td></tr>';
+  tbody.innerHTML = '';
 
-  try {
-    const data = await apiCall({ action: 'getUsers' });
-    const users = data.users || [];
-    tbody.innerHTML = '';
-
-    if (users.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="empty-users">Nessun utente registrato.</td></tr>';
-      return;
-    }
-
-    users.forEach(function(u) {
-      const tr = document.createElement('tr');
-      const isMe = u.username === currentUser.username;
-      const canDelete = !isMe;
-      const pwdStatus = u.hasPassword
-        ? '<span style="color:var(--verde); font-size:0.75rem;">✓ Impostata</span>'
-        : '<span style="color:var(--arancio); font-size:0.75rem;">⏳ Primo accesso</span>';
-      const resetBtn = (u.hasPassword && canDelete)
-        ? '<button class="btn-delete" onclick="resetUserPassword(\'' + escapeHtml(u.username) + '\')" style="border-color:#d4a017; color:#a07800; margin-right:0.4rem;" onmouseover="this.style.background=\'#a07800\';this.style.color=\'white\'" onmouseout="this.style.background=\'none\';this.style.color=\'#a07800\'">Reset pwd</button>'
-        : '';
-      tr.innerHTML =
-        '<td><strong>' + escapeHtml(u.username) + '</strong>' + (isMe ? ' <em style="color:var(--grigio);font-size:0.75rem;">(tu)</em>' : '') + '</td>' +
-        '<td><span class="badge badge-' + u.role + '">' + (u.role === 'admin' ? 'Admin' : 'Utente') + '</span></td>' +
-        '<td>' + pwdStatus + '</td>' +
-        '<td>' + resetBtn + (canDelete ? '<button class="btn-delete" onclick="deleteUser(\'' + escapeHtml(u.username) + '\')">Elimina</button>' : '<span style="color:var(--grigio);font-size:0.78rem;">—</span>') + '</td>';
-      tbody.appendChild(tr);
-    });
-  } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:1rem; color:var(--rosso); font-size:0.82rem;">⚠ Errore caricamento utenti.</td></tr>';
+  if (users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-users">Nessun utente registrato.</td></tr>';
+    return;
   }
+
+  users.forEach(function(u) {
+    const tr = document.createElement('tr');
+    const isMe = u.username === currentUser.username;
+    const canDelete = !isMe;
+    const pwdStatus = u.hash
+      ? '<span style="color:var(--verde); font-size:0.75rem;">✓ Impostata</span>'
+      : '<span style="color:var(--arancio); font-size:0.75rem;">⏳ Primo accesso</span>';
+    const resetBtn = (u.hash && canDelete)
+      ? '<button class="btn-delete" onclick="resetUserPassword(\'' + escapeHtml(u.username) + '\')" style="border-color:#d4a017; color:#a07800; margin-right:0.4rem;" onmouseover="this.style.background=\'#a07800\';this.style.color=\'white\'" onmouseout="this.style.background=\'none\';this.style.color=\'#a07800\'">Reset pwd</button>'
+      : '';
+    tr.innerHTML =
+      '<td><strong>' + escapeHtml(u.username) + '</strong>' + (isMe ? ' <em style="color:var(--grigio);font-size:0.75rem;">(tu)</em>' : '') + '</td>' +
+      '<td><span class="badge badge-' + u.role + '">' + (u.role === 'admin' ? 'Admin' : 'Utente') + '</span></td>' +
+      '<td>' + pwdStatus + '</td>' +
+      '<td>' + resetBtn + (canDelete ? '<button class="btn-delete" onclick="deleteUser(\'' + escapeHtml(u.username) + '\')">Elimina</button>' : '<span style="color:var(--grigio);font-size:0.78rem;">—</span>') + '</td>';
+    tbody.appendChild(tr);
+  });
 }
 
 function escapeHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 async function addUser() {
   const username = document.getElementById('new-username').value.trim();
   const role = document.getElementById('new-role').value;
   const msgEl = document.getElementById('add-user-msg');
+
   msgEl.style.display = 'none';
 
-  if (!username) { showMsg(msgEl, '⚠ Inserisci uno username.', 'error'); return; }
-
-  try {
-    const res = await apiCall({ action: 'addUser', username: username, role: role });
-    if (!res.ok) { showMsg(msgEl, '⚠ ' + (res.error || 'Errore.'), 'error'); return; }
-    document.getElementById('new-username').value = '';
-    document.getElementById('new-role').value = 'user';
-    showMsg(msgEl, '✓ Utente "' + username + '" aggiunto. Potrà scegliere la password al primo accesso.', 'success');
-    renderUsersList();
-  } catch(e) {
-    showMsg(msgEl, '⚠ Errore di connessione.', 'error');
+  if (!username) {
+    showMsg(msgEl, '⚠ Inserisci uno username.', 'error');
+    return;
   }
+
+  const users = getUsers() || [];
+  if (users.find(u => u.username === username)) {
+    showMsg(msgEl, '⚠ Username già esistente.', 'error');
+    return;
+  }
+
+  // Nessuna password: l'utente la sceglierà al primo accesso
+  users.push({ username: username, hash: null, role: role });
+  saveUsers(users);
+
+  document.getElementById('new-username').value = '';
+  document.getElementById('new-role').value = 'user';
+
+  showMsg(msgEl, '✓ Utente "' + username + '" aggiunto. Potrà scegliere la password al primo accesso.', 'success');
+  renderUsersList();
 }
 
-async function deleteUser(username) {
-  if (!confirm('Sei sicuro di voler eliminare "' + username + '"?')) return;
-  try {
-    await apiCall({ action: 'deleteUser', username: username });
-    renderUsersList();
-  } catch(e) {
-    alert('Errore durante l\'eliminazione.');
-  }
+function deleteUser(username) {
+  if (!confirm('Sei sicuro di voler eliminare l\'utente "' + username + '"?')) return;
+  let users = getUsers() || [];
+  users = users.filter(u => u.username !== username);
+  saveUsers(users);
+  renderUsersList();
 }
 
 async function changeMyPassword() {
@@ -1472,30 +1508,27 @@ async function changeMyPassword() {
   const msgEl = document.getElementById('change-pwd-msg');
   msgEl.style.display = 'none';
 
-  if (p1.length < 6) { showMsg(msgEl, '⚠ La password deve avere almeno 6 caratteri.', 'error'); return; }
-  if (p1 !== p2)      { showMsg(msgEl, '⚠ Le due password non coincidono.', 'error'); return; }
-
-  try {
-    const hash = await hashPassword(p1);
-    const res = await apiCall({ action: 'setPassword', username: currentUser.username, hash: hash });
-    if (!res.ok) { showMsg(msgEl, '⚠ Errore salvataggio.', 'error'); return; }
-    document.getElementById('new-pwd-1').value = '';
-    document.getElementById('new-pwd-2').value = '';
-    showMsg(msgEl, '✓ Password aggiornata con successo.', 'success');
-  } catch(e) {
-    showMsg(msgEl, '⚠ Errore di connessione.', 'error');
+  if (p1.length < 6) {
+    showMsg(msgEl, '⚠ La password deve avere almeno 6 caratteri.', 'error');
+    return;
   }
-}
-
-async function resetUserPassword(username) {
-  if (!confirm('Vuoi azzerare la password di "' + username + '"?\nAl prossimo accesso potrà sceglierne una nuova.')) return;
-  try {
-    await apiCall({ action: 'resetUser', username: username });
-    renderUsersList();
-    showMsg(document.getElementById('add-user-msg'), '✓ Password di "' + username + '" azzerata.', 'success');
-  } catch(e) {
-    alert('Errore durante il reset.');
+  if (p1 !== p2) {
+    showMsg(msgEl, '⚠ Le due password non coincidono.', 'error');
+    return;
   }
+
+  const hash = await hashPassword(p1);
+  let users = getUsers() || [];
+  users = users.map(u => u.username === currentUser.username ? { ...u, hash: hash } : u);
+  saveUsers(users);
+
+  // Aggiorna sessione
+  currentUser = { ...currentUser, hash: hash };
+  setSession(currentUser);
+
+  document.getElementById('new-pwd-1').value = '';
+  document.getElementById('new-pwd-2').value = '';
+  showMsg(msgEl, '✓ Password aggiornata con successo.', 'success');
 }
 
 function showMsg(el, msg, type) {
@@ -1593,14 +1626,15 @@ function selectSlot(slot, el) {
 }
 
 function goToSummary() {
-  const nome = document.getElementById('input-nome').value.trim();
-  const email = document.getElementById('input-email').value.trim();
-  const parte = document.getElementById('input-parte').value.trim();
+  const nome     = document.getElementById('input-nome').value.trim();
+  const email    = document.getElementById('input-email').value.trim();
+  const parte    = document.getElementById('input-parte').value.trim();
+  const rg       = document.getElementById('input-rg').value.trim().toUpperCase();
   const modalita = document.querySelector('input[name="modalita"]:checked').value;
   const modalitaStr = modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)';
   const status = document.getElementById('status-form');
 
-  if (!nome) { showError(status, 'Inserisci il tuo nome e cognome.'); return; }
+  if (!nome)  { showError(status, 'Inserisci il tuo nome e cognome.'); return; }
   if (!email || !email.includes('@')) { showError(status, 'Inserisci un indirizzo email valido.'); return; }
   if (!parte) { showError(status, 'Inserisci il nome della parte istante.'); return; }
   status.style.display = 'none';
@@ -1612,7 +1646,8 @@ function goToSummary() {
     row('Durata', '2 ore') +
     row('Richiedente', nome) +
     row('Email', email) +
-    row('Parte / N° mediazione', parte) +
+    row('Parte istante', parte) +
+    (rg ? row('R.G.', rg) : '') +
     row('Modalità', modalitaStr);
 
   goTo(3);
@@ -1623,11 +1658,12 @@ function row(label, value) {
 }
 
 function confirmBooking() {
-  const btn = document.getElementById('confirm-btn');
-  const status = document.getElementById('status-confirm');
-  const nome = document.getElementById('input-nome').value.trim();
-  const email = document.getElementById('input-email').value.trim();
-  const parte = document.getElementById('input-parte').value.trim();
+  const btn      = document.getElementById('confirm-btn');
+  const status   = document.getElementById('status-confirm');
+  const nome     = document.getElementById('input-nome').value.trim();
+  const email    = document.getElementById('input-email').value.trim();
+  const parte    = document.getElementById('input-parte').value.trim();
+  const rg       = document.getElementById('input-rg').value.trim().toUpperCase();
   const modalita = document.querySelector('input[name="modalita"]:checked').value;
   const modalitaStr = modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)';
 
@@ -1637,12 +1673,13 @@ function confirmBooking() {
 
   const url = SCRIPT_URL +
     '?action=book' +
-    '&start=' + encodeURIComponent(selectedSlot.start) +
-    '&end=' + encodeURIComponent(selectedSlot.end) +
-    '&nome=' + encodeURIComponent(nome) +
-    '&email=' + encodeURIComponent(email) +
+    '&start='        + encodeURIComponent(selectedSlot.start) +
+    '&end='          + encodeURIComponent(selectedSlot.end) +
+    '&nome='         + encodeURIComponent(nome) +
+    '&email='        + encodeURIComponent(email) +
     '&parteIstante=' + encodeURIComponent(parte) +
-    '&modalita=' + encodeURIComponent(modalita);
+    '&modalita='     + encodeURIComponent(modalita) +
+    '&rg='           + encodeURIComponent(rg);
 
   fetch(url)
     .then(function(r) { return r.json(); })
@@ -1652,7 +1689,8 @@ function confirmBooking() {
           '📅 ' + selectedSlot.display + '<br>' +
           '👤 ' + nome + '<br>' +
           '✉️ ' + email + '<br>' +
-          '⚖️ Parte / N° mediazione: ' + parte + '<br>' +
+          '⚖️ Parte istante: ' + parte + '<br>' +
+          (rg ? '📋 R.G.: ' + rg + '<br>' : '') +
           '📍 Modalità: ' + modalitaStr;
         goTo(4);
       } else {
@@ -1693,6 +1731,8 @@ function showError(el, msg) {
 // AVVIO
 // ============================================================
 window.onload = async function() {
+  await initUsers(); // Inizializza utenti di default se necessario
+
   // Controlla se c'è già una sessione attiva
   const session = getSession();
   if (session) {
@@ -1706,7 +1746,7 @@ window.onload = async function() {
     document.getElementById('login-screen').style.display = 'flex';
   }
 
-  // Login con INVIO
+  // Permetti login con INVIO
   document.getElementById('login-password').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') doLogin();
   });
