@@ -2515,6 +2515,19 @@ function caricaTuttePrenotazioni() {
         badge.textContent = statoTesto;
         div.appendChild(badge);
 
+        // Pulsante cancella (solo se non già cancellato)
+        if (p.stato !== 'CANCELLATO') {
+          var btnCanc = document.createElement('button');
+          btnCanc.textContent = 'Cancella';
+          btnCanc.style.cssText = 'margin-top:0.5rem; padding:0.3rem 0.8rem; background:none; border:1.5px solid #e8bdb9; border-radius:5px; color:var(--rosso); font-family:Raleway,sans-serif; font-size:0.73rem; font-weight:600; cursor:pointer; display:block;';
+          btnCanc.onmouseover = function() { this.style.background='var(--rosso)'; this.style.color='white'; };
+          btnCanc.onmouseout  = function() { this.style.background='none'; this.style.color='var(--rosso)'; };
+          (function(eid, nome, dataPren) {
+            btnCanc.onclick = function() { cancella(eid, nome, dataPren); };
+          })(p.eventId, p.richiedente, p.data);
+          left.appendChild(btnCanc);
+        }
+
         lista.appendChild(div);
       });
 
@@ -2524,6 +2537,27 @@ function caricaTuttePrenotazioni() {
     })
     .catch(function() {
       lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.85rem;">Errore nel caricamento.</div>';
+    });
+}
+
+// ============================================================
+// CANCELLA PRENOTAZIONE (admin)
+// ============================================================
+function cancella(eventId, nome, dataPren) {
+  if (!confirm('Cancellare la prenotazione di ' + nome + ' del ' + dataPren + '?\nVerra inviata email alla parte.')) return;
+
+  fetch(SCRIPT_URL + '?action=cancellaPrenotazione&eventId=' + encodeURIComponent(eventId))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        alert('Prenotazione cancellata. Email inviata a ' + data.nome + '.');
+        caricaTuttePrenotazioni();
+      } else {
+        alert('Errore: ' + (data.error || 'impossibile cancellare.'));
+      }
+    })
+    .catch(function() {
+      alert('Errore di connessione.');
     });
 }
 
