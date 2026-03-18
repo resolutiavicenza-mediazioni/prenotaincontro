@@ -1345,13 +1345,13 @@
 // ============================================================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-dJqWvme-Dq19g0rAgJ-DglLBnqfRk-UIe89GC8CrTxVCab816embugW8Mw0BrkTDTg/exec';
 
-// Admin di default
-const DEFAULT_ADMIN = { username: 'marino', password: 'Lupo@2026', role: 'admin' };
-
 // ============================================================
 // GESTIONE UTENTI (localStorage)
 // ============================================================
 
+// ============================================================
+// HASH PASSWORD (usato solo lato client prima di inviare al server)
+// ============================================================
 async function hashPassword(pwd) {
   const encoder = new TextEncoder();
   const data = encoder.encode(pwd + 'resolut_salt_2025');
@@ -1360,25 +1360,10 @@ async function hashPassword(pwd) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function getUsers() {
-  const raw = localStorage.getItem('mediazione_users_v2');
-  return raw ? JSON.parse(raw) : null;
-}
-
-function saveUsers(users) {
-  localStorage.setItem('mediazione_users_v2', JSON.stringify(users));
-}
-
-async function initUsers() {
-  let users = getUsers();
-  if (!users) {
-    // Prima inizializzazione: crea utente admin di default
-    const hash = await hashPassword(DEFAULT_ADMIN.password);
-    users = [{ username: DEFAULT_ADMIN.username, hash: hash, role: 'admin' }];
-    saveUsers(users);
-  }
-  return users;
-}
+// Compatibilità — non più usate per gli utenti, solo per la sessione
+function getUsers() { return null; }
+function saveUsers(users) {}
+async function initUsers() { return []; }
 
 // ============================================================
 // SESSION
@@ -1418,7 +1403,8 @@ async function doLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
   const remember = document.getElementById('remember-me').checked;
-  const errEl = document.getElementById('login-error');
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.querySelector('.btn-login');
   errEl.style.display = 'none';
 
   if (!username) {
@@ -1427,45 +1413,58 @@ async function doLogin() {
     return;
   }
 
-  const users = await initUsers();
-  const user = users.find(u => u.username === username);
+  btn.disabled = true;
+  btn.textContent = 'Controllo in corso…';
 
-  if (!user) {
-    errEl.style.display = 'block';
-    errEl.textContent = '⚠ Username non trovato.';
-    return;
-  }
+  try {
+    // 1. Verifica se l'utente esiste nel server
+    const checkResp = await fetch(SCRIPT_URL + '?action=checkLogin&username=' + encodeURIComponent(username));
+    const checkData = await checkResp.json();
 
-  // Primo accesso: nessuna password ancora impostata
-  if (!user.hash) {
-    if (password) {
+    if (!checkData.found) {
       errEl.style.display = 'block';
-      errEl.textContent = '⚠ È il tuo primo accesso: lascia il campo password vuoto e clicca Accedi.';
+      errEl.textContent = '⚠ Username non trovato.';
       return;
     }
-    showFirstLogin(user, remember);
-    return;
-  }
 
-  // Accesso normale
-  if (!password) {
+    // 2. Primo accesso: nessuna password sul server
+    if (!checkData.hasPassword) {
+      if (password) {
+        errEl.style.display = 'block';
+        errEl.textContent = '⚠ È il tuo primo accesso: lascia il campo password vuoto e clicca Accedi.';
+        return;
+      }
+      showFirstLogin({ username: checkData.username, role: checkData.role }, remember);
+      return;
+    }
+
+    // 3. Accesso normale: verifica password sul server
+    if (!password) {
+      errEl.style.display = 'block';
+      errEl.textContent = '⚠ Inserisci la password.';
+      return;
+    }
+
+    const hash = await hashPassword(password);
+    const loginResp = await fetch(SCRIPT_URL + '?action=login&username=' + encodeURIComponent(username) + '&hash=' + encodeURIComponent(hash));
+    const loginData = await loginResp.json();
+
+    if (!loginData.ok) {
+      errEl.style.display = 'block';
+      errEl.textContent = '⚠ Password non valida. Riprova.';
+      return;
+    }
+
+    const user = { username: loginData.username, role: loginData.role, hash: hash };
+    setSession(user, remember);
+    if (user.role === 'admin') showAdmin(); else goToApp();
+
+  } catch(err) {
     errEl.style.display = 'block';
-    errEl.textContent = '⚠ Inserisci la password.';
-    return;
-  }
-
-  const hash = await hashPassword(password);
-  if (user.hash !== hash) {
-    errEl.style.display = 'block';
-    errEl.textContent = '⚠ Password non valida. Riprova.';
-    return;
-  }
-
-  setSession(user, remember);
-  if (user.role === 'admin') {
-    showAdmin();
-  } else {
-    goToApp();
+    errEl.textContent = '⚠ Errore di connessione. Riprova.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Accedi →';
   }
 }
 
@@ -1585,16 +1584,15 @@ function sendForgotEmail() {
 }
 
 function resetUserPassword(username) {
-  if (!confirm('Vuoi azzerare la password di "' + username + '"?\nAl prossimo accesso potrà sceglierne una nuova.')) return;
-  let users = getUsers() || [];
-  users = users.map(u => u.username === username ? { ...u, hash: null } : u);
-  saveUsers(users);
-  renderUsersList();
-  // Sincronizza con Google Sheet
-  fetch(SCRIPT_URL + '?action=resetUser&username=' + encodeURIComponent(username)).catch(function(){});
-  // Mostra conferma
-  const msgEl = document.getElementById('add-user-msg');
-  showMsg(msgEl, '✓ Password di "' + username + '" azzerata. Potrà sceglierla al prossimo accesso.', 'success');
+  if (!confirm('Vuoi azzerare la password di "' + username + '"?\nAl prossimo accesso potra sceglierla.')) return;
+  fetch(SCRIPT_URL + '?action=resetUser&username=' + encodeURIComponent(username))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var msgEl = document.getElementById('add-user-msg');
+      showMsg(msgEl, '✓ Password di "' + username + '" azzerata.', 'success');
+      renderUsersList();
+    })
+    .catch(function() { renderUsersList(); });
 }
 let firstLoginUser = null;
 let firstLoginRemember = false;
@@ -1612,9 +1610,10 @@ function showFirstLogin(user, remember) {
 }
 
 async function doSetFirstPassword() {
-  const p1 = document.getElementById('firstlogin-pwd1').value;
-  const p2 = document.getElementById('firstlogin-pwd2').value;
+  const p1    = document.getElementById('firstlogin-pwd1').value;
+  const p2    = document.getElementById('firstlogin-pwd2').value;
   const errEl = document.getElementById('firstlogin-error');
+  const btn   = document.querySelector('#firstlogin-screen .btn-login');
   errEl.style.display = 'none';
 
   if (p1.length < 6) {
@@ -1628,19 +1627,33 @@ async function doSetFirstPassword() {
     return;
   }
 
-  const hash = await hashPassword(p1);
-  let users = getUsers() || [];
-  users = users.map(u => u.username === firstLoginUser.username ? { ...u, hash: hash } : u);
-  saveUsers(users);
+  btn.disabled = true;
+  btn.textContent = 'Salvataggio…';
 
-  const updatedUser = { ...firstLoginUser, hash: hash };
-  setSession(updatedUser, firstLoginRemember);
-  document.getElementById('firstlogin-screen').style.display = 'none';
+  try {
+    const hash = await hashPassword(p1);
 
-  if (updatedUser.role === 'admin') {
-    showAdmin();
-  } else {
-    goToApp();
+    // Salva la password sul server (Google Sheet)
+    const resp = await fetch(SCRIPT_URL + '?action=setPassword&username=' + encodeURIComponent(firstLoginUser.username) + '&hash=' + encodeURIComponent(hash));
+    const data = await resp.json();
+
+    if (!data.ok) {
+      errEl.style.display = 'block';
+      errEl.textContent = '⚠ Errore nel salvataggio. Riprova.';
+      return;
+    }
+
+    const updatedUser = { ...firstLoginUser, hash: hash };
+    setSession(updatedUser, firstLoginRemember);
+    document.getElementById('firstlogin-screen').style.display = 'none';
+
+    if (updatedUser.role === 'admin') showAdmin(); else goToApp();
+
+  } catch(err) {
+    errEl.style.display = 'block';
+    errEl.textContent = '⚠ Errore di connessione. Riprova.';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Salva e accedi →'; }
   }
 }
 
@@ -1649,32 +1662,89 @@ async function doSetFirstPassword() {
 // ============================================================
 
 function renderUsersList() {
-  const users = getUsers() || [];
-  const tbody = document.getElementById('users-tbody');
-  tbody.innerHTML = '';
+  var tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--grigio);font-size:0.82rem;padding:1rem;">Caricamento utenti...</td></tr>';
 
-  if (users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" class="empty-users">Nessun utente registrato.</td></tr>';
-    return;
-  }
+  fetch(SCRIPT_URL + '?action=getUsers')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      tbody.innerHTML = '';
+      if (!data.ok || !data.users || data.users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-users">Nessun utente registrato.</td></tr>';
+        return;
+      }
+      data.users.forEach(function(u) {
+        var isMe   = u.username === currentUser.username;
+        var canDel = !isMe;
 
-  users.forEach(function(u) {
-    const tr = document.createElement('tr');
-    const isMe = u.username === currentUser.username;
-    const canDelete = !isMe;
-    const pwdStatus = u.hash
-      ? '<span style="color:var(--verde); font-size:0.75rem;">✓ Impostata</span>'
-      : '<span style="color:var(--arancio); font-size:0.75rem;">⏳ Primo accesso</span>';
-    const resetBtn = (u.hash && canDelete)
-      ? '<button class="btn-delete" onclick="resetUserPassword(\'' + escapeHtml(u.username) + '\')" style="border-color:#d4a017; color:#a07800; margin-right:0.4rem;" onmouseover="this.style.background=\'#a07800\';this.style.color=\'white\'" onmouseout="this.style.background=\'none\';this.style.color=\'#a07800\'">Reset pwd</button>'
-      : '';
-    tr.innerHTML =
-      '<td><strong>' + escapeHtml(u.username) + '</strong>' + (isMe ? ' <em style="color:var(--grigio);font-size:0.75rem;">(tu)</em>' : '') + '</td>' +
-      '<td><span class="badge badge-' + u.role + '">' + (u.role === 'admin' ? 'Admin' : 'Utente') + '</span></td>' +
-      '<td>' + pwdStatus + '</td>' +
-      '<td>' + resetBtn + (canDelete ? '<button class="btn-delete" onclick="deleteUser(\'' + escapeHtml(u.username) + '\')">Elimina</button>' : '<span style="color:var(--grigio);font-size:0.78rem;">—</span>') + '</td>';
-    tbody.appendChild(tr);
-  });
+        // Cella 1: username
+        var td1 = document.createElement('td');
+        var strong = document.createElement('strong');
+        strong.textContent = u.username;
+        td1.appendChild(strong);
+        if (isMe) {
+          var em = document.createElement('em');
+          em.textContent = ' (tu)';
+          em.style.cssText = 'color:var(--grigio);font-size:0.75rem;';
+          td1.appendChild(em);
+        }
+
+        // Cella 2: ruolo
+        var td2 = document.createElement('td');
+        var badge = document.createElement('span');
+        badge.className = 'badge badge-' + u.role;
+        badge.textContent = u.role === 'admin' ? 'Admin' : 'Utente';
+        td2.appendChild(badge);
+
+        // Cella 3: password
+        var td3 = document.createElement('td');
+        var pwdSpan = document.createElement('span');
+        pwdSpan.style.fontSize = '0.75rem';
+        if (u.hasPassword) {
+          pwdSpan.style.color = 'var(--verde)';
+          pwdSpan.textContent = '✓ Impostata';
+        } else {
+          pwdSpan.style.color = 'var(--arancio)';
+          pwdSpan.textContent = '⏳ Primo accesso';
+        }
+        td3.appendChild(pwdSpan);
+
+        // Cella 4: azioni
+        var td4 = document.createElement('td');
+        if (u.hasPassword && canDel) {
+          var btnReset = document.createElement('button');
+          btnReset.className = 'btn-delete';
+          btnReset.textContent = 'Reset pwd';
+          btnReset.style.cssText = 'border-color:#d4a017;color:#a07800;margin-right:0.4rem;';
+          btnReset.onmouseover = function() { this.style.background='#a07800'; this.style.color='white'; };
+          btnReset.onmouseout  = function() { this.style.background='none';    this.style.color='#a07800'; };
+          (function(uname) { btnReset.onclick = function() { resetUserPassword(uname); }; })(u.username);
+          td4.appendChild(btnReset);
+        }
+        if (canDel) {
+          var btnDel = document.createElement('button');
+          btnDel.className = 'btn-delete';
+          btnDel.textContent = 'Elimina';
+          (function(uname) { btnDel.onclick = function() { deleteUser(uname); }; })(u.username);
+          td4.appendChild(btnDel);
+        } else {
+          var dash = document.createElement('span');
+          dash.style.cssText = 'color:var(--grigio);font-size:0.78rem;';
+          dash.textContent = '—';
+          td4.appendChild(dash);
+        }
+
+        var tr = document.createElement('tr');
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        tr.appendChild(td4);
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(function() {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--rosso);font-size:0.82rem;">Errore nel caricamento utenti.</td></tr>';
+    });
 }
 
 function escapeHtml(str) {
@@ -1682,46 +1752,32 @@ function escapeHtml(str) {
 }
 
 async function addUser() {
-  const username = document.getElementById('new-username').value.trim();
-  const role = document.getElementById('new-role').value;
-  const msgEl = document.getElementById('add-user-msg');
-
+  var username = document.getElementById('new-username').value.trim();
+  var role     = document.getElementById('new-role').value;
+  var msgEl    = document.getElementById('add-user-msg');
   msgEl.style.display = 'none';
 
-  if (!username) {
-    showMsg(msgEl, '⚠ Inserisci uno username.', 'error');
-    return;
-  }
+  if (!username) { showMsg(msgEl, '⚠ Inserisci uno username.', 'error'); return; }
 
-  const users = getUsers() || [];
-  if (users.find(u => u.username === username)) {
-    showMsg(msgEl, '⚠ Username già esistente.', 'error');
-    return;
-  }
-
-  // Salva in localStorage
-  users.push({ username: username, hash: null, role: role });
-  saveUsers(users);
-
-  // Sincronizza con Google Sheet
   try {
-    await fetch(SCRIPT_URL + '?action=addUser&username=' + encodeURIComponent(username) + '&role=' + encodeURIComponent(role));
-  } catch(e) {}
-
-  document.getElementById('new-username').value = '';
-  document.getElementById('new-role').value = 'user';
-
-  showMsg(msgEl, '✓ Utente "' + username + '" aggiunto. Potrà scegliere la password al primo accesso.', 'success');
-  renderUsersList();
+    var resp = await fetch(SCRIPT_URL + '?action=addUser&username=' + encodeURIComponent(username) + '&role=' + encodeURIComponent(role));
+    var data = await resp.json();
+    if (!data.ok) { showMsg(msgEl, '⚠ ' + (data.error || 'Errore nel salvataggio.'), 'error'); return; }
+    document.getElementById('new-username').value = '';
+    document.getElementById('new-role').value = 'user';
+    showMsg(msgEl, '✓ Utente "' + username + '" aggiunto. Potrà scegliere la password al primo accesso.', 'success');
+    renderUsersList();
+  } catch(e) {
+    showMsg(msgEl, '⚠ Errore di connessione.', 'error');
+  }
 }
 
 function deleteUser(username) {
   if (!confirm('Sei sicuro di voler eliminare l\'utente "' + username + '"?')) return;
-  let users = getUsers() || [];
-  users = users.filter(u => u.username !== username);
-  saveUsers(users);
-  renderUsersList();
-  fetch(SCRIPT_URL + '?action=deleteUser&username=' + encodeURIComponent(username)).catch(function(){});
+  fetch(SCRIPT_URL + '?action=deleteUser&username=' + encodeURIComponent(username))
+    .then(function(r) { return r.json(); })
+    .then(function() { renderUsersList(); })
+    .catch(function() { renderUsersList(); });
 }
 
 async function changeMyPassword() {
@@ -1740,9 +1796,15 @@ async function changeMyPassword() {
   }
 
   const hash = await hashPassword(p1);
-  let users = getUsers() || [];
-  users = users.map(u => u.username === currentUser.username ? { ...u, hash: hash } : u);
-  saveUsers(users);
+
+  try {
+    const resp = await fetch(SCRIPT_URL + '?action=setPassword&username=' + encodeURIComponent(currentUser.username) + '&hash=' + encodeURIComponent(hash));
+    const data = await resp.json();
+    if (!data.ok) { showMsg(msgEl, '⚠ Errore nel salvataggio.', 'error'); return; }
+  } catch(e) {
+    showMsg(msgEl, '⚠ Errore di connessione.', 'error');
+    return;
+  }
 
   // Aggiorna sessione
   currentUser = { ...currentUser, hash: hash };
@@ -2258,9 +2320,7 @@ function saveConfig() {
 // AVVIO
 // ============================================================
 window.onload = async function() {
-  await initUsers(); // Inizializza utenti di default se necessario
-
-  // Controlla se c'è già una sessione attiva
+  // Controlla se c'e' gia una sessione attiva
   const session = getSession();
   if (session) {
     currentUser = session;
