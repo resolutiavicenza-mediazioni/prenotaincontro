@@ -889,8 +889,9 @@
     </div>
     <div class="admin-nav">
       <button class="btn-admin-nav" onclick="showAdminTab('users')">👥 Utenti</button>
-      <button class="btn-admin-nav" onclick="showAdminTab('prenota')">📅 Prenota per parte</button>
-      <button class="btn-admin-nav" onclick="showAdminTab('config')">⚙ Configurazione</button>
+      <button class="btn-admin-nav" onclick="showAdminTab('vedi')">📋 Prenotazioni</button>
+      <button class="btn-admin-nav" onclick="showAdminTab('prenota')">📅 Prenota</button>
+      <button class="btn-admin-nav" onclick="showAdminTab('config')">⚙ Config</button>
       <button class="btn-admin-nav" onclick="showAdminTab('pwd')">🔑 Password</button>
       <button class="btn-admin-nav" onclick="goToApp()">🗓 App</button>
       <button class="btn-admin-nav" onclick="doLogout()">Esci</button>
@@ -1128,6 +1129,38 @@
 
           <button class="btn-add" id="cfg-save-btn" onclick="saveConfig()" style="width:100%; padding:0.9rem; font-size:0.88rem;">💾 Salva configurazione</button>
           <div id="cfg-msg" style="margin-top:0.8rem; font-size:0.82rem; padding:0.7rem 1rem; border-radius:6px; display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Tab Vedi Prenotazioni (admin) -->
+    <div id="admin-tab-vedi" style="display:none">
+      <div class="admin-card">
+        <h3>📋 Tutte le prenotazioni</h3>
+
+        <!-- Filtri -->
+        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.8rem; margin-bottom:1.2rem; align-items:end;">
+          <div class="input-group" style="margin-bottom:0;">
+            <label>Cerca (nome, email, R.G., username)</label>
+            <input type="text" id="vedi-filtro" placeholder="Es. Rossi o 192/26"
+              oninput="caricaTuttePrenotazioni()" />
+          </div>
+          <div class="input-group" style="margin-bottom:0;">
+            <label>Stato</label>
+            <select id="vedi-stato" onchange="caricaTuttePrenotazioni()">
+              <option value="">Tutti</option>
+              <option value="IN ATTESA">In attesa</option>
+              <option value="CONFERMATO">Confermati</option>
+              <option value="CANCELLATO">Cancellati</option>
+            </select>
+          </div>
+          <button class="btn-add" onclick="caricaTuttePrenotazioni()" style="padding:0.75rem 1rem; white-space:nowrap;">🔄 Aggiorna</button>
+        </div>
+
+        <div id="vedi-count" style="font-size:0.78rem; color:var(--grigio); margin-bottom:0.8rem;"></div>
+        <div id="vedi-lista" style="min-height:100px;">
+          <div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.88rem;">Clicca Aggiorna per caricare le prenotazioni.</div>
         </div>
       </div>
     </div>
@@ -1526,6 +1559,7 @@ function showAdminTab(tab) {
   document.getElementById('admin-tab-pwd').style.display      = tab === 'pwd'     ? 'block' : 'none';
   document.getElementById('admin-tab-prenota').style.display  = tab === 'prenota' ? 'block' : 'none';
   document.getElementById('admin-tab-config').style.display   = tab === 'config'  ? 'block' : 'none';
+  document.getElementById('admin-tab-vedi').style.display     = tab === 'vedi'    ? 'block' : 'none';
   if (tab === 'prenota' && !window._adminSlotsLoaded) {
     window._adminSlotsLoaded = true;
     loadAdminSlots();
@@ -1533,6 +1567,9 @@ function showAdminTab(tab) {
   if (tab === 'config' && !window._configLoaded) {
     window._configLoaded = true;
     loadConfig();
+  }
+  if (tab === 'vedi') {
+    caricaTuttePrenotazioni();
   }
 }
 
@@ -2394,6 +2431,97 @@ function caricaMiePrenotazioni() {
     })
     .catch(function() {
       container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.88rem;">Errore nel caricamento.</div>';
+    });
+}
+
+// ============================================================
+// VEDI TUTTE LE PRENOTAZIONI (admin)
+// ============================================================
+function caricaTuttePrenotazioni() {
+  var lista   = document.getElementById('vedi-lista');
+  var count   = document.getElementById('vedi-count');
+  var filtro  = document.getElementById('vedi-filtro').value.trim();
+  var stato   = document.getElementById('vedi-stato').value;
+
+  lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>';
+  count.textContent = '';
+
+  var url = SCRIPT_URL + '?action=getTuttePrenotazioni' +
+    '&filtro=' + encodeURIComponent(filtro) +
+    '&stato='  + encodeURIComponent(stato);
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      lista.innerHTML = '';
+      if (!data.ok || !data.prenotazioni || data.prenotazioni.length === 0) {
+        lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Nessuna prenotazione trovata.</div>';
+        count.textContent = '';
+        return;
+      }
+
+      var pren = data.prenotazioni;
+      count.textContent = pren.length + ' prenotazione' + (pren.length !== 1 ? 'i' : '') + ' trovata' + (pren.length !== 1 ? 'e' : '');
+
+      pren.forEach(function(p) {
+        var statoColor = p.stato === 'CONFERMATO' ? '#1a7a5e' : p.stato === 'CANCELLATO' ? '#c0392b' : '#e67e22';
+        var statoBg    = p.stato === 'CONFERMATO' ? '#d5f5e3' : p.stato === 'CANCELLATO' ? '#fdecea' : '#fef9e7';
+        var statoTesto = p.stato === 'CONFERMATO' ? 'Confermato' : p.stato === 'CANCELLATO' ? 'Cancellato' : 'In attesa';
+
+        var div = document.createElement('div');
+        div.style.cssText = 'padding:0.9rem 0; border-bottom:1px solid var(--bordo); display:grid; grid-template-columns:1fr auto; gap:1rem; align-items:start;';
+
+        var left = document.createElement('div');
+
+        // Data e modalita
+        var dataDiv = document.createElement('div');
+        dataDiv.style.cssText = 'font-weight:600; color:var(--blu); font-size:0.9rem; margin-bottom:0.2rem;';
+        dataDiv.textContent = p.data || '—';
+        left.appendChild(dataDiv);
+
+        // Parte / R.G.
+        var parteDiv = document.createElement('div');
+        parteDiv.style.cssText = 'font-size:0.82rem; color:var(--testo); margin-bottom:0.15rem;';
+        parteDiv.textContent = (p.parte || p.richiedente || '') + (p.rg ? ' · R.G. ' + p.rg : '');
+        left.appendChild(parteDiv);
+
+        // Richiedente e username
+        var utDiv = document.createElement('div');
+        utDiv.style.cssText = 'font-size:0.78rem; color:var(--grigio);';
+        utDiv.textContent = (p.email || '') + (p.username ? ' · @' + p.username : '');
+        left.appendChild(utDiv);
+
+        // Modalita e Meet
+        var modDiv = document.createElement('div');
+        modDiv.style.cssText = 'font-size:0.78rem; color:var(--grigio); margin-top:0.1rem;';
+        modDiv.textContent = p.modalita || '';
+        if (p.meetLink) {
+          var a = document.createElement('a');
+          a.href = p.meetLink;
+          a.target = '_blank';
+          a.style.cssText = 'color:var(--verde); margin-left:0.5rem;';
+          a.textContent = 'Meet';
+          modDiv.appendChild(a);
+        }
+        left.appendChild(modDiv);
+
+        div.appendChild(left);
+
+        // Stato badge
+        var badge = document.createElement('span');
+        badge.style.cssText = 'font-size:0.72rem; font-weight:600; padding:0.25rem 0.6rem; border-radius:20px; white-space:nowrap; background:' + statoBg + '; color:' + statoColor + ';';
+        badge.textContent = statoTesto;
+        div.appendChild(badge);
+
+        lista.appendChild(div);
+      });
+
+      // Remove border from last
+      var items = lista.querySelectorAll('div[style*="border-bottom"]');
+      if (items.length > 0) items[items.length-1].style.borderBottom = 'none';
+    })
+    .catch(function() {
+      lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.85rem;">Errore nel caricamento.</div>';
     });
 }
 
