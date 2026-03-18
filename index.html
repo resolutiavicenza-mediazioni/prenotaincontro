@@ -890,8 +890,9 @@
     <div class="admin-nav">
       <button class="btn-admin-nav" onclick="showAdminTab('users')">👥 Utenti</button>
       <button class="btn-admin-nav" onclick="showAdminTab('prenota')">📅 Prenota per parte</button>
-      <button class="btn-admin-nav" onclick="showAdminTab('pwd')">🔑 Cambia password</button>
-      <button class="btn-admin-nav" onclick="goToApp()">🗓 Vai all'App</button>
+      <button class="btn-admin-nav" onclick="showAdminTab('config')">⚙ Configurazione</button>
+      <button class="btn-admin-nav" onclick="showAdminTab('pwd')">🔑 Password</button>
+      <button class="btn-admin-nav" onclick="goToApp()">🗓 App</button>
       <button class="btn-admin-nav" onclick="doLogout()">Esci</button>
     </div>
   </div>
@@ -1028,6 +1029,107 @@
         </div>
       </div>
 
+    </div>
+
+
+    <!-- Tab Configurazione -->
+    <div id="admin-tab-config" style="display:none">
+      <div class="admin-card">
+        <h3>⚙ Configurazione applicazione</h3>
+        <p style="font-size:0.82rem; color:var(--grigio); margin-bottom:1.5rem; line-height:1.6;">
+          Le impostazioni sono salvate nel foglio Google Sheet (tab "Config") e si applicano immediatamente.
+        </p>
+        <div id="config-loading" style="text-align:center; padding:1.5rem; color:var(--grigio); font-size:0.85rem;">Caricamento…</div>
+        <div id="config-form" style="display:none">
+
+          <!-- Sezione: Disponibilità -->
+          <div style="margin-bottom:1.8rem;">
+            <p style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:1rem; border-bottom:2px solid var(--cielo); padding-bottom:0.5rem;">📅 Disponibilità</p>
+
+            <div class="input-group">
+              <label>Giorni disponibili</label>
+              <div style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:0.4rem;" id="cfg-giorni-wrap">
+                <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.88rem;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;"><input type="checkbox" value="1" class="cfg-giorno" style="accent-color:var(--azzurro);"> Lunedì</label>
+                <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.88rem;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;"><input type="checkbox" value="2" class="cfg-giorno" style="accent-color:var(--azzurro);"> Martedì</label>
+                <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.88rem;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;"><input type="checkbox" value="3" class="cfg-giorno" style="accent-color:var(--azzurro);"> Mercoledì</label>
+                <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.88rem;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;"><input type="checkbox" value="4" class="cfg-giorno" style="accent-color:var(--azzurro);"> Giovedì</label>
+                <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.88rem;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;"><input type="checkbox" value="5" class="cfg-giorno" style="accent-color:var(--azzurro);"> Venerdì</label>
+                <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.88rem;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;"><input type="checkbox" value="6" class="cfg-giorno" style="accent-color:var(--azzurro);"> Sabato</label>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-top:0.8rem;">
+              <div class="input-group">
+                <label>Orari slot <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.8em;">(separati da virgola)</span></label>
+                <input type="text" id="cfg-slot-hours" placeholder="es. 9,11,15,17" />
+              </div>
+              <div class="input-group">
+                <label>Durata slot (ore)</label>
+                <input type="number" id="cfg-slot-duration" min="1" max="4" style="max-width:80px;" />
+              </div>
+              <div class="input-group">
+                <label>Giorni minimi anticipo</label>
+                <input type="number" id="cfg-days-min" min="1" max="60" />
+              </div>
+              <div class="input-group">
+                <label>Giorni massimi anticipo</label>
+                <input type="number" id="cfg-days-max" min="7" max="120" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Sezione: Mediatore -->
+          <div style="margin-bottom:1.8rem;">
+            <p style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:1rem; border-bottom:2px solid var(--cielo); padding-bottom:0.5rem;">👤 Mediatore</p>
+            <div class="input-group">
+              <label>Nome mediatore</label>
+              <input type="text" id="cfg-nome-mediatore" placeholder="Es. Avv. Mario Rossi - Vicenza" />
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+              <div class="input-group">
+                <label>Email avvisi</label>
+                <input type="email" id="cfg-email-avviso" />
+              </div>
+              <div class="input-group">
+                <label>Email CC</label>
+                <input type="email" id="cfg-email-cc" />
+              </div>
+              <div class="input-group">
+                <label>Nome firma email</label>
+                <input type="text" id="cfg-nome-firma" />
+              </div>
+              <div class="input-group">
+                <label>Email firma</label>
+                <input type="email" id="cfg-email-firma" />
+              </div>
+            </div>
+            <div class="input-group">
+              <label>Sede firma email</label>
+              <input type="text" id="cfg-sede-firma" />
+            </div>
+          </div>
+
+          <!-- Sezione: App -->
+          <div style="margin-bottom:1.8rem;">
+            <p style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:1rem; border-bottom:2px solid var(--cielo); padding-bottom:0.5rem;">🖥 Interfaccia app</p>
+            <div class="input-group">
+              <label>Titolo header</label>
+              <input type="text" id="cfg-titolo-app" />
+            </div>
+            <div class="input-group">
+              <label>Sottotitolo header</label>
+              <input type="text" id="cfg-sottotitolo-app" />
+            </div>
+            <div class="input-group">
+              <label>Cartella radice Google Drive</label>
+              <input type="text" id="cfg-drive-root" />
+            </div>
+          </div>
+
+          <button class="btn-add" id="cfg-save-btn" onclick="saveConfig()" style="width:100%; padding:0.9rem; font-size:0.88rem;">💾 Salva configurazione</button>
+          <div id="cfg-msg" style="margin-top:0.8rem; font-size:0.82rem; padding:0.7rem 1rem; border-radius:6px; display:none;"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Tab Cambia Password -->
@@ -1412,9 +1514,14 @@ function showAdminTab(tab) {
   document.getElementById('admin-tab-users').style.display    = tab === 'users'   ? 'block' : 'none';
   document.getElementById('admin-tab-pwd').style.display      = tab === 'pwd'     ? 'block' : 'none';
   document.getElementById('admin-tab-prenota').style.display  = tab === 'prenota' ? 'block' : 'none';
+  document.getElementById('admin-tab-config').style.display   = tab === 'config'  ? 'block' : 'none';
   if (tab === 'prenota' && !window._adminSlotsLoaded) {
     window._adminSlotsLoaded = true;
     loadAdminSlots();
+  }
+  if (tab === 'config' && !window._configLoaded) {
+    window._configLoaded = true;
+    loadConfig();
   }
 }
 
@@ -2037,6 +2144,106 @@ function sincronizzaCampi() {
     parteEl.placeholder = 'Es. Mario Rossi o Azienda Srl';
     gruppoEl.style.opacity = '1';
   }
+}
+
+// ============================================================
+// CONFIGURAZIONE ADMIN
+// ============================================================
+
+function loadConfig() {
+  fetch(SCRIPT_URL + '?action=getConfig')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('config-loading').style.display = 'none';
+      if (!data.ok) return;
+      var cfg = {};
+      data.config.forEach(function(item) { cfg[item.key] = item.value; });
+
+      // Popola campi
+      document.getElementById('cfg-slot-hours').value     = cfg['slot_hours']        || '9,11,15,17';
+      document.getElementById('cfg-slot-duration').value  = cfg['slot_duration']     || '2';
+      document.getElementById('cfg-days-min').value       = cfg['days_min']          || '22';
+      document.getElementById('cfg-days-max').value       = cfg['days_max']          || '40';
+      document.getElementById('cfg-nome-mediatore').value = cfg['nome_mediatore']    || '';
+      document.getElementById('cfg-email-avviso').value   = cfg['email_avviso']      || '';
+      document.getElementById('cfg-email-cc').value       = cfg['email_cc']          || '';
+      document.getElementById('cfg-nome-firma').value     = cfg['nome_firma']        || '';
+      document.getElementById('cfg-sede-firma').value     = cfg['sede_firma']        || '';
+      document.getElementById('cfg-email-firma').value    = cfg['email_firma']       || '';
+      document.getElementById('cfg-titolo-app').value     = cfg['titolo_app']        || '';
+      document.getElementById('cfg-sottotitolo-app').value= cfg['sottotitolo_app']   || '';
+      document.getElementById('cfg-drive-root').value     = cfg['drive_root_folder'] || '';
+
+      // Checkbox giorni
+      var giorni = (cfg['giorni_disponibili'] || '1,2,3,4').split(',').map(function(x){ return x.trim(); });
+      document.querySelectorAll('.cfg-giorno').forEach(function(cb) {
+        cb.checked = giorni.indexOf(cb.value) !== -1;
+      });
+
+      document.getElementById('config-form').style.display = 'block';
+    })
+    .catch(function() {
+      document.getElementById('config-loading').textContent = 'Errore nel caricamento della configurazione.';
+    });
+}
+
+function saveConfig() {
+  var btn = document.getElementById('cfg-save-btn');
+  var msg = document.getElementById('cfg-msg');
+  msg.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Salvataggio…';
+
+  // Raccoglie giorni selezionati
+  var giorni = [];
+  document.querySelectorAll('.cfg-giorno:checked').forEach(function(cb) {
+    giorni.push(cb.value);
+  });
+
+  var items = [
+    { key: 'slot_hours',         value: document.getElementById('cfg-slot-hours').value.trim() },
+    { key: 'slot_duration',      value: document.getElementById('cfg-slot-duration').value.trim() },
+    { key: 'days_min',           value: document.getElementById('cfg-days-min').value.trim() },
+    { key: 'days_max',           value: document.getElementById('cfg-days-max').value.trim() },
+    { key: 'giorni_disponibili', value: giorni.join(',') },
+    { key: 'nome_mediatore',     value: document.getElementById('cfg-nome-mediatore').value.trim() },
+    { key: 'email_avviso',       value: document.getElementById('cfg-email-avviso').value.trim() },
+    { key: 'email_cc',           value: document.getElementById('cfg-email-cc').value.trim() },
+    { key: 'nome_firma',         value: document.getElementById('cfg-nome-firma').value.trim() },
+    { key: 'sede_firma',         value: document.getElementById('cfg-sede-firma').value.trim() },
+    { key: 'email_firma',        value: document.getElementById('cfg-email-firma').value.trim() },
+    { key: 'titolo_app',         value: document.getElementById('cfg-titolo-app').value.trim() },
+    { key: 'sottotitolo_app',    value: document.getElementById('cfg-sottotitolo-app').value.trim() },
+    { key: 'drive_root_folder',  value: document.getElementById('cfg-drive-root').value.trim() }
+  ];
+
+  fetch(SCRIPT_URL + '?action=saveConfig&items=' + encodeURIComponent(JSON.stringify(items)))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = '💾 Salva configurazione';
+      msg.style.display = 'block';
+      if (data.ok) {
+        msg.style.background = '#d5f5e3';
+        msg.style.color = 'var(--verde)';
+        msg.textContent = '✓ Configurazione salvata. Le modifiche sono attive immediatamente.';
+        // Reset cache slot per prossimo caricamento
+        window._adminSlotsLoaded = false;
+        window._slotsLoaded = false;
+      } else {
+        msg.style.background = '#fdecea';
+        msg.style.color = 'var(--rosso)';
+        msg.textContent = '⚠ Errore: ' + (data.error || 'impossibile salvare.');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = '💾 Salva configurazione';
+      msg.style.display = 'block';
+      msg.style.background = '#fdecea';
+      msg.style.color = 'var(--rosso)';
+      msg.textContent = '⚠ Errore di rete.';
+    });
 }
 
 // ============================================================
