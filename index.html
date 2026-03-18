@@ -2398,36 +2398,77 @@ function toggleMiePrenotazioni() {
 function caricaMiePrenotazioni() {
   var container = document.getElementById('mie-prenotazioni-container');
   container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.88rem;">Caricamento...</div>';
-
   if (!currentUser) return;
 
   fetch(SCRIPT_URL + '?action=getMiePrenotazioni&username=' + encodeURIComponent(currentUser.username))
     .then(function(r) { return r.json(); })
     .then(function(data) {
+      container.innerHTML = '';
       if (!data.ok || !data.prenotazioni || data.prenotazioni.length === 0) {
         container.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;color:var(--grigio);font-size:0.88rem;">Nessuna prenotazione trovata.</div>';
         return;
       }
-      container.innerHTML = '';
       data.prenotazioni.forEach(function(p) {
         var statoColor = p.stato === 'CONFERMATO' ? 'var(--verde)' : p.stato === 'CANCELLATO' ? 'var(--rosso)' : 'var(--arancio)';
-        var statoTesto = p.stato === 'CONFERMATO' ? '✅ Confermato' : p.stato === 'CANCELLATO' ? '❌ Cancellato' : '⏳ In attesa';
+        var statoTesto = p.stato === 'CONFERMATO' ? '\u2705 Confermato' : p.stato === 'CANCELLATO' ? '\u274c Cancellato' : '\u23f3 In attesa';
+
         var div = document.createElement('div');
-        div.style.cssText = 'padding:1rem 0;border-bottom:1px solid var(--bordo);';
-        div.innerHTML =
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">' +
-            '<div>' +
-              '<div style="font-weight:600;color:var(--blu);font-size:0.92rem;">' + (p.data || '') + '</div>' +
-              '<div style="font-size:0.82rem;color:var(--grigio);margin-top:0.2rem;">' + (p.parte || p.richiedente) + (p.rg ? ' · R.G. ' + p.rg : '') + '</div>' +
-              '<div style="font-size:0.8rem;color:var(--grigio);margin-top:0.15rem;">' + (p.modalita || '') + (p.meetLink ? ' · <a href="' + p.meetLink + '" target="_blank" style="color:var(--verde);">Meet</a>' : '') + '</div>' +
-            '</div>' +
-            '<span style="font-size:0.75rem;font-weight:600;color:' + statoColor + ';white-space:nowrap;">' + statoTesto + '</span>' +
-          '</div>';
-        var last = container.querySelectorAll('div[style*="border-bottom"]');
-        if (last.length > 0) last[last.length-1].style.borderBottom = '1px solid var(--bordo)';
+        div.style.cssText = 'padding:1rem 0; border-bottom:1px solid var(--bordo); display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;';
+
+        // Colonna sinistra: dettagli
+        var left = document.createElement('div');
+        left.style.flex = '1';
+
+        var dDiv = document.createElement('div');
+        dDiv.style.cssText = 'font-weight:600; color:var(--blu); font-size:0.92rem; margin-bottom:0.2rem;';
+        dDiv.textContent = p.data || '—';
+        left.appendChild(dDiv);
+
+        var pDiv = document.createElement('div');
+        pDiv.style.cssText = 'font-size:0.82rem; color:var(--grigio); margin-top:0.15rem;';
+        pDiv.textContent = (p.parte || p.richiedente) + (p.rg ? ' · R.G. ' + p.rg : '');
+        left.appendChild(pDiv);
+
+        var mDiv = document.createElement('div');
+        mDiv.style.cssText = 'font-size:0.8rem; color:var(--grigio); margin-top:0.1rem;';
+        mDiv.textContent = p.modalita || '';
+        if (p.meetLink) {
+          var a = document.createElement('a');
+          a.href = p.meetLink; a.target = '_blank';
+          a.style.cssText = 'color:var(--verde); margin-left:0.5rem;';
+          a.textContent = 'Meet';
+          mDiv.appendChild(a);
+        }
+        left.appendChild(mDiv);
+
+        div.appendChild(left);
+
+        // Colonna destra: stato + cancella
+        var right = document.createElement('div');
+        right.style.cssText = 'display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem; flex-shrink:0;';
+
+        var stato = document.createElement('span');
+        stato.style.cssText = 'font-size:0.75rem; font-weight:600; color:' + statoColor + '; white-space:nowrap;';
+        stato.textContent = statoTesto;
+        right.appendChild(stato);
+
+        if (p.stato !== 'CANCELLATO') {
+          var btn = document.createElement('button');
+          btn.textContent = 'Cancella';
+          btn.style.cssText = 'font-size:0.7rem; padding:0.25rem 0.65rem; background:none; border:1.5px solid #e8bdb9; border-radius:5px; color:var(--rosso); cursor:pointer; font-family:Raleway,sans-serif; font-weight:600;';
+          btn.onmouseover = function() { this.style.background='var(--rosso)'; this.style.color='white'; };
+          btn.onmouseout  = function() { this.style.background='none'; this.style.color='var(--rosso)'; };
+          (function(eid, nome, dataPren) {
+            btn.onclick = function() { cancellaMia(eid, nome, dataPren); };
+          })(p.eventId, p.parte || p.richiedente, p.data);
+          right.appendChild(btn);
+        }
+
+        div.appendChild(right);
         container.appendChild(div);
       });
-      // Remove border from last item
+
+      // Remove last border
       var items = container.querySelectorAll('div[style*="border-bottom"]');
       if (items.length > 0) items[items.length-1].style.borderBottom = 'none';
     })
@@ -2436,9 +2477,7 @@ function caricaMiePrenotazioni() {
     });
 }
 
-// ============================================================
-// VEDI TUTTE LE PRENOTAZIONI (admin)
-// ============================================================
+
 function caricaTuttePrenotazioni() {
   var lista   = document.getElementById('vedi-lista');
   var count   = document.getElementById('vedi-count');
@@ -2507,15 +2546,7 @@ function caricaTuttePrenotazioni() {
         }
         left.appendChild(modDiv);
 
-        div.appendChild(left);
-
-        // Stato badge
-        var badge = document.createElement('span');
-        badge.style.cssText = 'font-size:0.72rem; font-weight:600; padding:0.25rem 0.6rem; border-radius:20px; white-space:nowrap; background:' + statoBg + '; color:' + statoColor + ';';
-        badge.textContent = statoTesto;
-        div.appendChild(badge);
-
-        // Pulsante cancella (solo se non già cancellato)
+        // Pulsante cancella (solo se non già cancellato) - dentro left, prima di appendere
         if (p.stato !== 'CANCELLATO') {
           var btnCanc = document.createElement('button');
           btnCanc.textContent = 'Cancella';
@@ -2527,6 +2558,14 @@ function caricaTuttePrenotazioni() {
           })(p.eventId, p.richiedente, p.data);
           left.appendChild(btnCanc);
         }
+
+        div.appendChild(left);
+
+        // Stato badge (colonna destra)
+        var badge = document.createElement('span');
+        badge.style.cssText = 'font-size:0.72rem; font-weight:600; padding:0.25rem 0.6rem; border-radius:20px; white-space:nowrap; background:' + statoBg + '; color:' + statoColor + ';';
+        badge.textContent = statoTesto;
+        div.appendChild(badge);
 
         lista.appendChild(div);
       });
@@ -2543,6 +2582,20 @@ function caricaTuttePrenotazioni() {
 // ============================================================
 // CANCELLA PRENOTAZIONE (admin)
 // ============================================================
+function cancellaMia(eventId, nome, dataPren) {
+  if (!confirm('Cancellare la prenotazione per ' + nome + ' del ' + dataPren + '?')) return;
+  fetch(SCRIPT_URL + '?action=cancellaPrenotazione&eventId=' + encodeURIComponent(eventId))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        caricaMiePrenotazioni();
+      } else {
+        alert('Errore: ' + (data.error || 'impossibile cancellare.'));
+      }
+    })
+    .catch(function() { alert('Errore di connessione.'); });
+}
+
 function cancella(eventId, nome, dataPren) {
   if (!confirm('Cancellare la prenotazione di ' + nome + ' del ' + dataPren + '?\nVerra inviata email alla parte.')) return;
 
