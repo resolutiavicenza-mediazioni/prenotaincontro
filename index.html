@@ -889,8 +889,9 @@
     </div>
     <div class="admin-nav">
       <button class="btn-admin-nav" onclick="showAdminTab('users')">👥 Utenti</button>
+      <button class="btn-admin-nav" onclick="showAdminTab('prenota')">📅 Prenota per parte</button>
       <button class="btn-admin-nav" onclick="showAdminTab('pwd')">🔑 Cambia password</button>
-      <button class="btn-admin-nav" onclick="goToApp()">📅 Vai all'App</button>
+      <button class="btn-admin-nav" onclick="goToApp()">🗓 Vai all'App</button>
       <button class="btn-admin-nav" onclick="doLogout()">Esci</button>
     </div>
   </div>
@@ -939,6 +940,94 @@
           </table>
         </div>
       </div>
+    </div>
+
+
+    <!-- Tab Prenota per parte (admin) -->
+    <div id="admin-tab-prenota" style="display:none">
+
+      <!-- Step A1: Scegli slot -->
+      <div id="admin-step-slot">
+        <div class="admin-card">
+          <h3>📅 Scegli una data</h3>
+          <p style="font-size:0.82rem; color:var(--grigio); margin-bottom:1.2rem; line-height:1.6;">
+            Stai prenotando come mediatore. L'appuntamento sarà confermato subito e la parte riceverà email immediata.
+          </p>
+          <div id="admin-loading-box" style="text-align:center; padding:2rem;">
+            <div class="spinner"></div>
+            <p style="font-size:0.85rem; color:var(--grigio); margin-top:0.8rem;">Controllo disponibilità…</p>
+          </div>
+          <div id="admin-slots-wrapper" style="display:none">
+            <div id="admin-slots-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step A2: Dati parte -->
+      <div id="admin-step-form" style="display:none">
+        <div class="admin-card">
+          <h3>📋 Dati della parte</h3>
+          <p style="font-size:0.82rem; color:var(--grigio); margin-bottom:0.5rem;">
+            Slot selezionato: <strong id="admin-selected-display" style="color:var(--blu)"></strong>
+          </p>
+          <button onclick="showAdminStep('slot')" style="margin-bottom:1.2rem; padding:0.4rem 0.9rem; background:none; border:1.5px solid var(--bordo); border-radius:5px; font-family:Raleway,sans-serif; font-size:0.78rem; color:var(--grigio); cursor:pointer;">← Cambia data</button>
+
+          <div class="input-group">
+            <label>Nome e Cognome della parte</label>
+            <input type="text" id="admin-input-nome" placeholder="Es. Mario Rossi" />
+          </div>
+          <div class="input-group">
+            <label>Email della parte</label>
+            <input type="email" id="admin-input-email" placeholder="mario.rossi@email.it" />
+          </div>
+
+          <div style="background:var(--cielo); border:1px solid var(--bordo); border-radius:8px; padding:1.1rem 1.3rem; margin-bottom:1.2rem;">
+            <p style="font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:0.9rem;">Identifica la procedura</p>
+            <div class="input-group" style="margin-bottom:0.7rem;">
+              <label>Numero R.G. <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em;">— se già depositato</span></label>
+              <input type="text" id="admin-input-rg" placeholder="Es. 192/26"
+                style="text-transform:uppercase; letter-spacing:0.04em;"
+                oninput="this.value=this.value.toUpperCase(); adminSincronizzaCampi();" />
+            </div>
+            <div style="text-align:center; color:var(--grigio); font-size:0.75rem; margin:0.5rem 0; text-transform:uppercase; letter-spacing:0.05em;">oppure</div>
+            <div class="input-group" id="admin-gruppo-parte" style="margin-bottom:0;">
+              <label>Nome parte istante <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em;">— se non c'è ancora R.G.</span></label>
+              <input type="text" id="admin-input-parte" placeholder="Es. Mario Rossi o Azienda Srl"
+                oninput="adminSincronizzaCampi();" />
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Modalità</label>
+            <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
+              <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; text-transform:none; letter-spacing:0; font-size:0.9rem; font-weight:500; color:var(--testo);">
+                <input type="radio" name="admin-modalita" value="presenza" checked style="accent-color:var(--azzurro); width:16px; height:16px;"> In presenza
+              </label>
+              <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; text-transform:none; letter-spacing:0; font-size:0.9rem; font-weight:500; color:var(--testo);">
+                <input type="radio" name="admin-modalita" value="telematica" style="accent-color:var(--azzurro); width:16px; height:16px;"> Telematica
+                <span style="font-size:0.75rem; color:var(--verde); font-weight:600;">+ GMeet</span>
+              </label>
+            </div>
+          </div>
+
+          <button class="btn-add" id="admin-confirm-btn" onclick="adminConfirmBooking()" style="width:100%; padding:0.9rem; margin-top:0.5rem; font-size:0.88rem;">✓ Conferma e invia email alla parte</button>
+          <div id="admin-status-form" style="margin-top:0.8rem; font-size:0.82rem; padding:0.7rem 1rem; border-radius:6px; display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Step A3: Successo -->
+      <div id="admin-step-success" style="display:none">
+        <div class="admin-card" style="text-align:center; padding:2.5rem 1.5rem;">
+          <div style="width:64px; height:64px; background:linear-gradient(135deg,var(--verde),#2ecc71); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.2rem;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <h3 style="font-family:Lora,serif; font-size:1.4rem; font-weight:400; color:var(--blu); margin-bottom:0.5rem;">Appuntamento confermato!</h3>
+          <p style="font-size:0.85rem; color:var(--grigio); margin-bottom:1.5rem;">Email inviata alla parte. Evento aggiunto al calendario.</p>
+          <div id="admin-success-detail" style="background:var(--cielo); border:1px solid var(--bordo); border-left:4px solid var(--verde); border-radius:6px; padding:1.1rem 1.3rem; text-align:left; font-size:0.85rem; line-height:1.9; color:var(--testo); margin-bottom:1.5rem;"></div>
+          <button class="btn-add" onclick="showAdminStep('slot'); adminResetForm();" style="max-width:220px;">+ Nuova prenotazione</button>
+        </div>
+      </div>
+
     </div>
 
     <!-- Tab Cambia Password -->
@@ -1320,8 +1409,13 @@ function goToApp() {
 }
 
 function showAdminTab(tab) {
-  document.getElementById('admin-tab-users').style.display = tab === 'users' ? 'block' : 'none';
-  document.getElementById('admin-tab-pwd').style.display = tab === 'pwd' ? 'block' : 'none';
+  document.getElementById('admin-tab-users').style.display    = tab === 'users'   ? 'block' : 'none';
+  document.getElementById('admin-tab-pwd').style.display      = tab === 'pwd'     ? 'block' : 'none';
+  document.getElementById('admin-tab-prenota').style.display  = tab === 'prenota' ? 'block' : 'none';
+  if (tab === 'prenota' && !window._adminSlotsLoaded) {
+    window._adminSlotsLoaded = true;
+    loadAdminSlots();
+  }
 }
 
 function showRememberInfo() {
@@ -1698,13 +1792,17 @@ function confirmBooking() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.ok) {
+        var meetHtml = data.meetLink
+          ? '<br>🎥 <strong>Google Meet:</strong> <a href="' + data.meetLink + '" target="_blank" style="color:var(--verde);">' + data.meetLink + '</a>'
+          : '';
         document.getElementById('success-detail').innerHTML =
           '📅 ' + selectedSlot.display + '<br>' +
           '👤 ' + nome + '<br>' +
           '✉️ ' + email + '<br>' +
           '⚖️ Parte istante: ' + parte + '<br>' +
           (rg ? '📋 R.G.: ' + rg + '<br>' : '') +
-          '📍 Modalità: ' + modalitaStr;
+          '📍 Modalità: ' + modalitaStr +
+          meetHtml;
         goTo(4);
       } else {
         showError(status, data.error || 'Errore nella prenotazione. Riprova.');
@@ -1738,6 +1836,185 @@ function goTo(n) {
 function showError(el, msg) {
   el.className = 'status-msg error';
   el.innerHTML = '⚠ ' + msg;
+}
+
+// ============================================================
+// ADMIN BOOKING — prenotazione diretta dal pannello admin
+// ============================================================
+var adminSelectedSlot = null;
+
+function loadAdminSlots() {
+  fetch(SCRIPT_URL + '?action=getSlots')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('admin-loading-box').style.display = 'none';
+      if (!data.ok) {
+        document.getElementById('admin-loading-box').innerHTML =
+          '<p style="color:var(--rosso); font-size:0.85rem;">Errore: ' + (data.error || 'impossibile caricare gli slot.') + '</p>';
+        document.getElementById('admin-loading-box').style.display = 'block';
+        return;
+      }
+      var slots = data.slots || [];
+      renderAdminSlots(slots);
+      document.getElementById('admin-slots-wrapper').style.display = 'block';
+    })
+    .catch(function() {
+      document.getElementById('admin-loading-box').innerHTML =
+        '<p style="color:var(--rosso); font-size:0.85rem;">Errore di connessione.</p>';
+    });
+}
+
+function renderAdminSlots(slots) {
+  var container = document.getElementById('admin-slots-container');
+  if (!slots || slots.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:var(--grigio); font-size:0.88rem; padding:2rem 0;">Nessuno slot disponibile nel periodo consentito.</p>';
+    return;
+  }
+  var mesi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+              'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var groups = {};
+  slots.forEach(function(slot) {
+    var d = new Date(slot.start);
+    var key = mesi[d.getMonth()] + ' ' + d.getFullYear();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(slot);
+  });
+  container.innerHTML = '';
+  Object.keys(groups).forEach(function(month) {
+    var mg = document.createElement('div');
+    mg.className = 'month-group';
+    mg.innerHTML = '<div class="month-label">' + month + '</div>';
+    groups[month].forEach(function(slot) {
+      var parts = slot.display.split(' — ');
+      var el = document.createElement('div');
+      el.className = 'slot-item';
+      el.innerHTML =
+        '<div>' +
+          '<div class="slot-day">' + (parts[0] || slot.display) + '</div>' +
+          '<div class="slot-time">' + (parts[1] || '') + '</div>' +
+        '</div>' +
+        '<div class="slot-arrow">→</div>';
+      el.onclick = function() {
+        document.querySelectorAll('#admin-slots-container .slot-item').forEach(function(s) {
+          s.classList.remove('selected');
+        });
+        el.classList.add('selected');
+        adminSelectedSlot = slot;
+        document.getElementById('admin-selected-display').textContent = slot.display;
+        setTimeout(function() { showAdminStep('form'); }, 250);
+      };
+      mg.appendChild(el);
+    });
+    container.appendChild(mg);
+  });
+}
+
+function showAdminStep(step) {
+  document.getElementById('admin-step-slot').style.display    = step === 'slot'    ? 'block' : 'none';
+  document.getElementById('admin-step-form').style.display    = step === 'form'    ? 'block' : 'none';
+  document.getElementById('admin-step-success').style.display = step === 'success' ? 'block' : 'none';
+}
+
+function adminSincronizzaCampi() {
+  var rgVal   = document.getElementById('admin-input-rg').value.trim();
+  var parteEl = document.getElementById('admin-input-parte');
+  var gruppo  = document.getElementById('admin-gruppo-parte');
+  if (rgVal.length > 0) {
+    parteEl.value = '';
+    parteEl.disabled = true;
+    parteEl.placeholder = 'Non necessario — R.G. già inserito';
+    gruppo.style.opacity = '0.45';
+  } else {
+    parteEl.disabled = false;
+    parteEl.placeholder = 'Es. Mario Rossi o Azienda Srl';
+    gruppo.style.opacity = '1';
+  }
+}
+
+function adminResetForm() {
+  document.getElementById('admin-input-nome').value  = '';
+  document.getElementById('admin-input-email').value = '';
+  document.getElementById('admin-input-rg').value    = '';
+  document.getElementById('admin-input-parte').value = '';
+  document.getElementById('admin-input-parte').disabled = false;
+  document.getElementById('admin-gruppo-parte').style.opacity = '1';
+  document.querySelector('input[name="admin-modalita"][value="presenza"]').checked = true;
+  adminSelectedSlot = null;
+  document.getElementById('admin-status-form').style.display = 'none';
+}
+
+function adminConfirmBooking() {
+  var btn      = document.getElementById('admin-confirm-btn');
+  var status   = document.getElementById('admin-status-form');
+  var nome     = document.getElementById('admin-input-nome').value.trim();
+  var email    = document.getElementById('admin-input-email').value.trim();
+  var rg       = document.getElementById('admin-input-rg').value.trim().toUpperCase();
+  var parte    = document.getElementById('admin-input-parte').value.trim();
+  var modalita = document.querySelector('input[name="admin-modalita"]:checked').value;
+
+  status.style.display = 'none';
+  if (!adminSelectedSlot) {
+    status.style.display = 'block'; status.style.background = '#fdecea';
+    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Nessuna data selezionata.'; return;
+  }
+  if (!nome) {
+    status.style.display = 'block'; status.style.background = '#fdecea';
+    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Inserisci il nome della parte.'; return;
+  }
+  if (!email || !email.includes('@')) {
+    status.style.display = 'block'; status.style.background = '#fdecea';
+    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Inserisci un email valida.'; return;
+  }
+  if (!rg && !parte) {
+    status.style.display = 'block'; status.style.background = '#fdecea';
+    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Inserisci R.G. o nome parte istante.'; return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Creazione in corso…';
+
+  var url = SCRIPT_URL +
+    '?action=bookAdmin' +
+    '&start='        + encodeURIComponent(adminSelectedSlot.start) +
+    '&end='          + encodeURIComponent(adminSelectedSlot.end) +
+    '&nome='         + encodeURIComponent(nome) +
+    '&email='        + encodeURIComponent(email) +
+    '&parteIstante=' + encodeURIComponent(parte || rg) +
+    '&modalita='     + encodeURIComponent(modalita) +
+    '&rg='           + encodeURIComponent(rg);
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = '✓ Conferma e invia email alla parte';
+      if (data.ok) {
+        var meetHtml = data.meetLink
+          ? '<br>🎥 <strong>Google Meet:</strong> <a href="' + data.meetLink + '" target="_blank" style="color:var(--verde);">' + data.meetLink + '</a>'
+          : '';
+        document.getElementById('admin-success-detail').innerHTML =
+          '📅 ' + adminSelectedSlot.display + '<br>' +
+          '👤 ' + nome + '<br>' +
+          '✉️ ' + email + '<br>' +
+          (rg ? '📋 R.G.: ' + rg + '<br>' : '⚖️ ' + parte + '<br>') +
+          '📍 ' + (modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)') +
+          meetHtml;
+        showAdminStep('success');
+      } else {
+        status.style.display = 'block';
+        status.style.background = '#fdecea';
+        status.style.color = 'var(--rosso)';
+        status.textContent = '⚠ ' + (data.error || 'Errore nella prenotazione.');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = '✓ Conferma e invia email alla parte';
+      status.style.display = 'block';
+      status.style.background = '#fdecea';
+      status.style.color = 'var(--rosso)';
+      status.textContent = '⚠ Errore di rete. Riprova.';
+    });
 }
 
 // ============================================================
