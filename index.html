@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -904,6 +904,7 @@
       <button class="btn-admin-nav" onclick="showAdminTab('pwd')">&#128273; Password</button>
       <button class="btn-admin-nav" onclick="goToApp()">&#128197; App</button>
       <button class="btn-admin-nav" onclick="entraMedPanel()" style="background:rgba(26,122,94,0.15);color:#1a7a5e;">&#9878; Vista Mediatore</button>
+      <button class="btn-admin-nav" onclick="doLogout()" style="background:rgba(192,57,43,0.12);color:var(--rosso);">Esci</button>
   </div>
 
   <div class="admin-main">
@@ -2960,12 +2961,17 @@ async function salvaImpostazioniEmail() {
 // ============================================================
 // PANNELLO MEDIATORE — routing
 // ============================================================
+function getMedUsername() {
+  // Se l'admin sta usando la vista mediatore con un profilo diverso, usa quello
+  return window._medPanelUsername || currentUser.username;
+}
+
 function showMediatore() {
   ['login-screen','firstlogin-screen','admin-screen','app-screen'].forEach(function(id) {
     document.getElementById(id).style.display = 'none';
   });
   document.getElementById('mediatore-screen').style.display = 'block';
-  document.getElementById('med-topbar-username').textContent = currentUser.username;
+  document.getElementById('med-topbar-username').textContent = window._medPanelUsername || currentUser.username;
   showMedTab('prenotazioni');
   caricaPrenotazioniMediatore();
 }
@@ -2983,12 +2989,59 @@ function showMedTab(tab) {
 }
 
 function entraMedPanel() {
+  // Se l'utente ha gia un profilo mediatore con lo stesso username, entra direttamente
+  fetch(SCRIPT_URL + '?action=getMediatorConfig&username=' + encodeURIComponent(getMedUsername()))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        // Profilo trovato con username corrente
+        showMediatore();
+        var backBtn = document.getElementById('med-btn-back-admin');
+        if (backBtn) backBtn.style.display = 'inline-block';
+      } else {
+        // Cerca tra i mediatori quello con email corrispondente
+        fetch(SCRIPT_URL + '?action=getMediatori&tipo=')
+          .then(function(r) { return r.json(); })
+          .then(function(mdata) {
+            var mediatori = mdata.mediatori || [];
+            if (mediatori.length === 0) {
+              alert('Nessun profilo mediatore trovato. Configura prima un mediatore nel tab Mediatori.');
+              return;
+            }
+            if (mediatori.length === 1) {
+              // Un solo mediatore: usa quello
+              window._medPanelUsername = mediatori[0].username;
+              showMediatore();
+              var backBtn = document.getElementById('med-btn-back-admin');
+              if (backBtn) backBtn.style.display = 'inline-block';
+            } else {
+              // Piu mediatori: mostra selettore
+              mostraSelectoreMediatorePannello(mediatori);
+            }
+          });
+      }
+    })
+    .catch(function() {
+      showMediatore();
+      var backBtn = document.getElementById('med-btn-back-admin');
+      if (backBtn) backBtn.style.display = 'inline-block';
+    });
+}
+
+function mostraSelectoreMediatorePannello(mediatori) {
+  var scelta = mediatori.map(function(m, i) { return (i+1) + ') ' + m.nome + ' (@' + m.username + ')'; }).join('\n');
+  var idx = prompt('Quale profilo mediatore vuoi visualizzare?\n\n' + scelta + '\n\nInserisci il numero:');
+  if (!idx) return;
+  var m = mediatori[parseInt(idx) - 1];
+  if (!m) return;
+  window._medPanelUsername = m.username;
   showMediatore();
   var backBtn = document.getElementById('med-btn-back-admin');
-  if (backBtn && currentUser && currentUser.role === 'admin') backBtn.style.display = 'inline-block';
+  if (backBtn) backBtn.style.display = 'inline-block';
 }
 
 function tornaAdmin() {
+  window._medPanelUsername = null;
   document.getElementById('mediatore-screen').style.display = 'none';
   showAdmin();
 }
@@ -3005,7 +3058,7 @@ function caricaPrenotazioniMediatore() {
     .then(function(data) {
       lista.innerHTML = '';
       var pren = (data.prenotazioni || []).filter(function(p) {
-        return !p.mediatore || p.mediatore === '' || p.mediatore.toLowerCase() === currentUser.username.toLowerCase();
+        return !p.mediatore || p.mediatore === '' || p.mediatore.toLowerCase() === getMedUsername().toLowerCase();
       });
       if (pren.length === 0) {
         lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Nessuna prenotazione trovata.</div>'; return;
@@ -3067,7 +3120,7 @@ function caricaSlotsPerMediatore() {
   document.getElementById('med-prenota-loading').style.display = 'block';
   document.getElementById('med-prenota-slots-wrapper').style.display = 'none';
   showMedPrenotaStep('slot');
-  fetch(SCRIPT_URL + '?action=getSlots&mediatore=' + encodeURIComponent(currentUser.username))
+  fetch(SCRIPT_URL + '?action=getSlots&mediatore=' + encodeURIComponent(getMedUsername()))
     .then(function(r) { return r.json(); })
     .then(function(data) {
       document.getElementById('med-prenota-loading').style.display = 'none';
@@ -3116,7 +3169,7 @@ function medConfirmBooking() {
   btn.disabled = true; btn.textContent = 'Creazione in corso\u2026';
   var url = SCRIPT_URL + '?action=bookAdmin' +
     '&username=' + encodeURIComponent(currentUser.username) +
-    '&mediatore=' + encodeURIComponent(currentUser.username) +
+    '&mediatore=' + encodeURIComponent(getMedUsername()) +
     '&start=' + encodeURIComponent(medSelectedSlot.start) + '&end=' + encodeURIComponent(medSelectedSlot.end) +
     '&nome=' + encodeURIComponent(nome) + '&email=' + encodeURIComponent(email) +
     '&parteIstante=' + encodeURIComponent(parte || rg) + '&modalita=' + encodeURIComponent(modalita) +
@@ -3144,7 +3197,7 @@ function caricaMieiUtenti() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       tbody.innerHTML = '';
-      var miei = (data.users || []).filter(function(u) { return u.creatoDa && u.creatoDa.toLowerCase() === currentUser.username.toLowerCase(); });
+      var miei = (data.users || []).filter(function(u) { return u.creatoDa && u.creatoDa.toLowerCase() === getMedUsername().toLowerCase(); });
       if (miei.length === 0) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.82rem;">Nessun utente creato ancora.</td></tr>'; return; }
       miei.forEach(function(u) {
         var tr = document.createElement('tr'); tr.style.borderBottom = '1px solid var(--bordo)';
@@ -3188,7 +3241,7 @@ function medResetUser(username) {
 function caricaMieSedi() {
   var lista = document.getElementById('med-sedi-lista');
   lista.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>';
-  fetch(SCRIPT_URL + '?action=getMieSedi&username=' + encodeURIComponent(currentUser.username))
+  fetch(SCRIPT_URL + '?action=getMieSedi&username=' + encodeURIComponent(getMedUsername()))
     .then(function(r) { return r.json(); })
     .then(function(data) {
       lista.innerHTML = '';
@@ -3227,7 +3280,7 @@ async function salvaSede(sedeId) {
   var orari  = document.getElementById('sed-orari-'  + sedeId).value.trim();
   var msg    = document.getElementById('sed-msg-' + sedeId);
   try {
-    var url = SCRIPT_URL + '?action=salvaSedDisponibilita&sedeId=' + encodeURIComponent(sedeId) + '&responsabile=' + encodeURIComponent(currentUser.username) + '&giorni=' + encodeURIComponent(giorni) + '&orari=' + encodeURIComponent(orari);
+    var url = SCRIPT_URL + '?action=salvaSedDisponibilita&sedeId=' + encodeURIComponent(sedeId) + '&responsabile=' + encodeURIComponent(getMedUsername()) + '&giorni=' + encodeURIComponent(giorni) + '&orari=' + encodeURIComponent(orari);
     var resp = await fetch(url); var data = await resp.json();
     msg.style.display='inline';
     if (data.ok) { msg.style.color='var(--verde)'; msg.textContent='\u2713 Salvato!'; setTimeout(caricaMieSedi, 1000); }
@@ -3242,7 +3295,7 @@ function caricaMiaConfig() {
   document.getElementById('med-cfg-loading').style.display = 'block';
   document.getElementById('med-cfg-loading').textContent = 'Caricamento...';
   document.getElementById('med-cfg-form').style.display = 'none';
-  fetch(SCRIPT_URL + '?action=getMediatorConfig&username=' + encodeURIComponent(currentUser.username))
+  fetch(SCRIPT_URL + '?action=getMediatorConfig&username=' + encodeURIComponent(getMedUsername()))
     .then(function(r) { return r.json(); })
     .then(function(data) {
       document.getElementById('med-cfg-loading').style.display = 'none';
@@ -3266,7 +3319,7 @@ async function salvaMiaConfig() {
   btn.disabled=true; btn.textContent='Salvataggio...';
   try {
     var url = SCRIPT_URL + '?action=salvaMediatorConfig' +
-      '&username=' + encodeURIComponent(currentUser.username) +
+      '&username=' + encodeURIComponent(getMedUsername()) +
       '&sediPresenza=' + encodeURIComponent(document.getElementById('med-cfg-sedi').value.trim()) +
       '&online=' + encodeURIComponent(document.getElementById('med-cfg-online').checked?'SI':'NO') +
       '&giorni=' + encodeURIComponent(document.getElementById('med-cfg-giorni').value.trim()) +
