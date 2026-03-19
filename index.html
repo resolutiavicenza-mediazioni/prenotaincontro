@@ -1256,6 +1256,28 @@
       <button class="btn btn-back" onclick="toggleMiePrenotazioni()" style="margin-top:1rem;">← Torna alla prenotazione</button>
     </div>
 
+    <!-- PANEL 0: SELEZIONE SEDE E MEDIATORE -->
+    <div id="sede-mediatore-bar" style="background:var(--cielo); border:1px solid var(--bordo); border-radius:10px; padding:1rem 1.4rem; margin-bottom:1.2rem; display:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:end;">
+        <div class="input-group" style="margin-bottom:0;">
+          <label style="font-size:0.72rem;">Sede</label>
+          <select id="select-sede" onchange="onSedeChange()" style="font-size:0.85rem; padding:0.5rem 0.8rem;"></select>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label style="font-size:0.72rem;">Mediatore</label>
+          <div style="display:flex; align-items:center; gap:0.6rem;">
+            <span id="mediatore-nome" style="font-size:0.85rem; font-weight:600; color:var(--blu);"></span>
+            <button id="btn-cambia-mediatore" onclick="mostraCambiaMediatore()" style="display:none; font-size:0.72rem; padding:0.25rem 0.6rem; background:none; border:1.5px solid var(--azzurro); border-radius:5px; color:var(--azzurro); cursor:pointer;">Cambia</button>
+          </div>
+        </div>
+      </div>
+      <!-- dropdown cambia mediatore -->
+      <div id="cambia-mediatore-box" style="display:none; margin-top:0.8rem; border-top:1px solid var(--bordo); padding-top:0.8rem;">
+        <p style="font-size:0.75rem; color:var(--grigio); margin-bottom:0.5rem;">Seleziona un altro mediatore disponibile:</p>
+        <div id="lista-mediatori"></div>
+      </div>
+    </div>
+
     <!-- PANEL 1: LOADING + SLOTS -->
     <div class="panel active" id="panel-1">
       <div class="loading-box" id="loading-box">
@@ -1313,10 +1335,10 @@
           <label>Modalità dell'incontro</label>
           <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
             <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; text-transform:none; letter-spacing:0; font-size:0.9rem; font-weight:500; color:var(--testo);">
-              <input type="radio" name="modalita" value="presenza" checked style="accent-color:var(--azzurro); width:16px; height:16px;"> In presenza
+              <input type="radio" name="modalita" value="presenza" checked style="accent-color:var(--azzurro); width:16px; height:16px;" onchange="onModalitaChange()"> In presenza <span id="label-sede-presenza" style="font-size:0.75rem; color:var(--grigio); font-weight:500;"></span>
             </label>
             <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; text-transform:none; letter-spacing:0; font-size:0.9rem; font-weight:500; color:var(--testo);">
-              <input type="radio" name="modalita" value="telematica" style="accent-color:var(--azzurro); width:16px; height:16px;"> Telematica
+              <input type="radio" name="modalita" value="telematica" style="accent-color:var(--azzurro); width:16px; height:16px;" onchange="onModalitaChange()"> Telematica
               <span style="font-size:0.75rem; color:var(--verde); font-weight:600;">+ GMeet</span>
             </label>
           </div>
@@ -1567,10 +1589,10 @@ function goToApp() {
     if (alertBanner) alertBanner.style.display = 'none';
   }
 
-  // Carica slots se necessario
+  // Inizializza sede/mediatore e poi carica slots
   if (!window._slotsLoaded) {
     window._slotsLoaded = true;
-    loadSlots();
+    inizializzaSedeMediatore();
   }
 }
 
@@ -1907,7 +1929,9 @@ let allSlots = [];
 let selectedSlot = null;
 
 function loadSlots() {
-  fetch(SCRIPT_URL + '?action=getSlots')
+  var medParam = window._mediatoreSelezionato ? '&mediatore=' + encodeURIComponent(window._mediatoreSelezionato) : '';
+  var sedeParam = window._sedeSelezionata ? '&sede=' + encodeURIComponent(window._sedeSelezionata) : '';
+  fetch(SCRIPT_URL + '?action=getSlots' + medParam + sedeParam)
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.mediatore) {
@@ -1993,7 +2017,9 @@ function goToSummary() {
   const parte    = document.getElementById('input-parte').value.trim();
   const rg       = document.getElementById('input-rg').value.trim().toUpperCase();
   const modalita = document.querySelector('input[name="modalita"]:checked').value;
-  const modalitaStr = modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)';
+  var sedeSelezionata = window._sedeSelezionata || '';
+  var mediatoreSelezionato = window._mediatoreSelezionato || '';
+  const modalitaStr = modalita === 'telematica' ? 'Telematica (da remoto)' : ('In presenza - ' + (sedeSelezionata || 'Vicenza'));
   const status = document.getElementById('status-form');
 
   if (!nome)  { showError(status, 'Inserisci il tuo nome e cognome.'); return; }
@@ -2010,6 +2036,8 @@ function goToSummary() {
     row('Email', email) +
     row('Parte istante', parte) +
     (rg ? row('R.G.', rg) : '') +
+    row('Sede', sedeSelezionata || 'Vicenza') +
+    row('Mediatore', (window._mediatoreNome || window._mediatoreSelezionato || '')) +
     row('Modalità', modalitaStr);
 
   goTo(3);
@@ -2033,6 +2061,9 @@ function confirmBooking() {
   status.className = 'status-msg loading';
   status.innerHTML = '<div class="mini-spin"></div> Creazione appuntamento in corso…';
 
+  var sedeConf = window._sedeSelezionata || '';
+  var mediConf = window._mediatoreSelezionato || '';
+  const modalitaStr2 = modalita === 'telematica' ? 'Telematica (da remoto)' : ('In presenza - ' + (sedeConf || 'Vicenza'));
   const url = SCRIPT_URL +
     '?action=book' +
     '&start='        + encodeURIComponent(selectedSlot.start) +
@@ -2042,7 +2073,9 @@ function confirmBooking() {
     '&parteIstante=' + encodeURIComponent(parte) +
     '&modalita='     + encodeURIComponent(modalita) +
     '&rg='           + encodeURIComponent(rg) +
-    '&username='     + encodeURIComponent(currentUser ? currentUser.username : '');
+    '&username='     + encodeURIComponent(currentUser ? currentUser.username : '') +
+    '&mediatore='    + encodeURIComponent(mediConf) +
+    '&sede='         + encodeURIComponent(sedeConf);
 
   fetch(url)
     .then(function(r) { return r.json(); })
@@ -2398,6 +2431,150 @@ function saveConfig() {
 }
 
 // ============================================================
+// SEDE E MEDIATORE
+// ============================================================
+window._mediatoreSelezionato = '';
+window._mediatoreNome        = '';
+window._sedeSelezionata      = '';
+window._mediatoreCfg         = null;
+
+function inizializzaSedeMediatore() {
+  // Mediatore di default = chi ha creato l'account
+  var creatoDa = currentUser && currentUser.creatoDa ? currentUser.creatoDa : 'marino';
+  caricaMediatoreCfg(creatoDa);
+}
+
+function caricaMediatoreCfg(username) {
+  fetch(SCRIPT_URL + '?action=getMediatorConfig&username=' + encodeURIComponent(username))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) return;
+      window._mediatoreCfg         = data;
+      window._mediatoreSelezionato = data.username;
+      window._mediatoreNome        = data.nome;
+
+      // Popola select sede
+      var select = document.getElementById('select-sede');
+      select.innerHTML = '';
+      if (data.sediPresenza && data.sediPresenza.length > 0) {
+        data.sediPresenza.forEach(function(s) {
+          var opt = document.createElement('option');
+          opt.value = s; opt.textContent = s;
+          select.appendChild(opt);
+        });
+      }
+      if (data.online) {
+        var opt = document.createElement('option');
+        opt.value = 'Telematica'; opt.textContent = 'Telematica (da remoto)';
+        select.appendChild(opt);
+      }
+
+      // Mostra la barra
+      document.getElementById('sede-mediatore-bar').style.display = 'block';
+      document.getElementById('mediatore-nome').textContent = data.nome;
+
+      // Imposta sede default
+      if (select.options.length > 0) {
+        window._sedeSelezionata = select.options[0].value;
+        aggiornaModalitaDaSede();
+      }
+
+      // Ricarica slots con config mediatore
+      ricaricaSlots();
+    })
+    .catch(function() {});
+}
+
+function onSedeChange() {
+  var s = document.getElementById('select-sede').value;
+  window._sedeSelezionata = s;
+  aggiornaModalitaDaSede();
+  document.getElementById('cambia-mediatore-box').style.display = 'none';
+  ricaricaSlots();
+}
+
+function aggiornaModalitaDaSede() {
+  var sede = window._sedeSelezionata;
+  var isTelematica = (sede === 'Telematica');
+  // Seleziona automaticamente la modalita radio
+  var radios = document.querySelectorAll('input[name="modalita"]');
+  radios.forEach(function(r) {
+    if (isTelematica) { r.checked = (r.value === 'telematica'); }
+    else              { r.checked = (r.value === 'presenza');   }
+  });
+  // Aggiorna label sede accanto a "In presenza"
+  var label = document.getElementById('label-sede-presenza');
+  if (label) label.textContent = isTelematica ? '' : ('(' + sede + ')');
+}
+
+function onModalitaChange() {
+  var modalita = document.querySelector('input[name="modalita"]:checked').value;
+  // Se l'utente cambia manualmente a telematica ma la sede non è telematica
+  if (modalita === 'telematica' && window._sedeSelezionata !== 'Telematica') {
+    var select = document.getElementById('select-sede');
+    for (var i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === 'Telematica') {
+        select.selectedIndex = i;
+        window._sedeSelezionata = 'Telematica';
+        break;
+      }
+    }
+  }
+  if (modalita === 'presenza' && window._sedeSelezionata === 'Telematica') {
+    var select2 = document.getElementById('select-sede');
+    if (select2.options.length > 0 && select2.options[0].value !== 'Telematica') {
+      select2.selectedIndex = 0;
+      window._sedeSelezionata = select2.options[0].value;
+    }
+  }
+  var label2 = document.getElementById('label-sede-presenza');
+  if (label2) label2.textContent = (modalita === 'presenza' && window._sedeSelezionata !== 'Telematica') ? ('(' + window._sedeSelezionata + ')') : '';
+}
+
+function ricaricaSlots() {
+  window._slotsLoaded = false;
+  var lbox = document.getElementById('loading-box');
+  var swrapper = document.getElementById('slots-wrapper');
+  if (lbox) { lbox.style.display = 'block'; lbox.innerHTML = '<div class="spinner"></div><p>Controllo disponibilita calendario...</p>'; }
+  if (swrapper) swrapper.style.display = 'none';
+  loadSlots();
+}
+
+function mostraCambiaMediatore() {
+  var box = document.getElementById('cambia-mediatore-box');
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  var sede  = window._sedeSelezionata;
+  var tipo  = sede === 'Telematica' ? 'telematica' : 'presenza';
+  var lista = document.getElementById('lista-mediatori');
+  lista.innerHTML = '<span style="font-size:0.78rem;color:var(--grigio);">Caricamento...</span>';
+  box.style.display = 'block';
+  fetch(SCRIPT_URL + '?action=getMediatori&sede=' + encodeURIComponent(sede) + '&tipo=' + encodeURIComponent(tipo))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      lista.innerHTML = '';
+      if (!data.ok || !data.mediatori || data.mediatori.length === 0) {
+        lista.innerHTML = '<span style="font-size:0.78rem;color:var(--grigio);">Nessun altro mediatore disponibile.</span>';
+        return;
+      }
+      data.mediatori.forEach(function(m) {
+        var btn = document.createElement('button');
+        btn.style.cssText = 'display:block; width:100%; text-align:left; padding:0.5rem 0.8rem; margin-bottom:0.3rem; background:' + (m.username === window._mediatoreSelezionato ? 'var(--cielo)' : 'none') + '; border:1px solid var(--bordo); border-radius:6px; cursor:pointer; font-family:Raleway,sans-serif; font-size:0.83rem; color:var(--testo);';
+        btn.textContent = m.nome + (m.username === window._mediatoreSelezionato ? ' ✓' : '');
+        (function(med) {
+          btn.onclick = function() {
+            window._mediatoreSelezionato = med.username;
+            window._mediatoreNome = med.nome;
+            document.getElementById('mediatore-nome').textContent = med.nome;
+            box.style.display = 'none';
+            caricaMediatoreCfg(med.username);
+          };
+        })(m);
+        lista.appendChild(btn);
+      });
+    });
+}
+
+// ============================================================
 // LE MIE PRENOTAZIONI
 // ============================================================
 var _miePrenotazioniVisible = false;
@@ -2419,6 +2596,7 @@ function toggleMiePrenotazioni() {
     });
     goTo(1);
     document.getElementById('btn-mie-prenotazioni').textContent = '📋 Le mie prenotazioni';
+    if (!window._mediatoreSelezionato) inizializzaSedeMediatore();
   }
 }
 
