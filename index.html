@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -903,6 +903,7 @@
       <button class="btn-admin-nav" onclick="showAdminTab('config')">⚙ Config</button>
       <button class="btn-admin-nav" onclick="showAdminTab('pwd')">🔑 Password</button>
       <button class="btn-admin-nav" onclick="goToApp()">🗓 App</button>
+      <button class="btn-admin-nav" onclick="entraMedPanel()" style="background:rgba(26,122,94,0.15); color:#1a7a5e;">&#9878; Vista Mediatore</button>
       <button class="btn-admin-nav" onclick="doLogout()">Esci</button>
     </div>
   </div>
@@ -1995,11 +1996,17 @@ let allSlots = [];
 let selectedSlot = null;
 
 function loadSlots() {
-  var medParam = window._mediatoreSelezionato ? '&mediatore=' + encodeURIComponent(window._mediatoreSelezionato) : '';
+  var medParam  = window._mediatoreSelezionato ? '&mediatore=' + encodeURIComponent(window._mediatoreSelezionato) : '';
   var sedeParam = window._sedeSelezionata ? '&sede=' + encodeURIComponent(window._sedeSelezionata) : '';
-  fetch(SCRIPT_URL + '?action=getSlots' + medParam + sedeParam)
+  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var tid = controller ? setTimeout(function() {
+    controller.abort();
+    showLoadingError('Timeout: il calendario impiega troppo. Ricarica la pagina.');
+  }, 30000) : null;
+  fetch(SCRIPT_URL + '?action=getSlots' + medParam + sedeParam, controller ? { signal: controller.signal } : {})
     .then(function(r) { return r.json(); })
     .then(function(data) {
+      if (tid) clearTimeout(tid);
       if (data.mediatore) {
         document.getElementById('header-name').textContent = data.mediatore;
       }
@@ -2506,15 +2513,37 @@ window._mediatoreCfg         = null;
 
 function inizializzaSedeMediatore() {
   // Mediatore di default = chi ha creato l'account
-  var creatoDa = currentUser && currentUser.creatoDa ? currentUser.creatoDa : 'marino';
-  caricaMediatoreCfg(creatoDa);
+  var creatoDa = currentUser && currentUser.creatoDa ? currentUser.creatoDa : '';
+  if (creatoDa) {
+    caricaMediatoreCfg(creatoDa);
+  } else {
+    // Nessun creatoDa: cerca il primo mediatore disponibile nel sistema
+    fetch(SCRIPT_URL + '?action=getMediatori&tipo=')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok && data.mediatori && data.mediatori.length > 0) {
+          caricaMediatoreCfg(data.mediatori[0].username);
+        } else {
+          // Nessun mediatore: carica slot con config globale
+          ricaricaSlots();
+        }
+      })
+      .catch(function() { ricaricaSlots(); });
+  }
 }
 
 function caricaMediatoreCfg(username) {
   fetch(SCRIPT_URL + '?action=getMediatorConfig&username=' + encodeURIComponent(username))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (!data.ok) return;
+      if (!data.ok) {
+        // Config non trovata: carica slots senza filtro sede/mediatore
+        document.getElementById('sede-mediatore-bar').style.display = 'none';
+        window._mediatoreSelezionato = username;
+        window._mediatoreNome = username;
+        ricaricaSlots();
+        return;
+      }
       window._mediatoreCfg         = data;
       window._mediatoreSelezionato = data.username;
       window._mediatoreNome        = data.nome;
@@ -2548,7 +2577,10 @@ function caricaMediatoreCfg(username) {
       // Ricarica slots con config mediatore
       ricaricaSlots();
     })
-    .catch(function() {});
+    .catch(function() {
+      // Errore rete: carica comunque gli slot con config di default
+      ricaricaSlots();
+    });
 }
 
 function onSedeChange() {
@@ -2928,8 +2960,115 @@ async function salvaImpostazioniEmail() {
 }
 
 // ============================================================
+// LE MIE SEDI (responsabile sede)
+// ============================================================
+function caricaMieSedi() {
+  var lista = document.getElementById('med-sedi-lista');
+  lista.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>';
+
+  fetch(SCRIPT_URL + '?action=getMieSedi&username=' + encodeURIComponent(currentUser.username))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      lista.innerHTML = '';
+      if (!data.ok || !data.sedi || data.sedi.length === 0) {
+        lista.innerHTML = "";
+        var _el = document.createElement("div");
+        _el.style.textAlign = "center";
+        _el.style.padding = "2rem";
+        _el.style.color = "var(--grigio)";
+        _el.style.fontSize = "0.85rem";
+        _el.textContent = "Non sei responsabile di nessuna sede.";
+        lista.appendChild(_el);
+        return;
+      }
+      data.sedi.forEach(function(sede) {
+        var card = document.createElement('div');
+        card.style.cssText = 'border:1px solid var(--bordo); border-radius:9px; padding:1.2rem; margin-bottom:1rem;';
+
+        var giorniLabels = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+        var giorniAttuali = (sede.giorniSede || []).join(',');
+        var orariAttuali  = (sede.orariSede  || []).join(',');
+        var giorniTesto = sede.giorniSede && sede.giorniSede.length > 0
+          ? sede.giorniSede.map(function(g){ return giorniLabels[g]||g; }).join(', ')
+          : 'Non configurato';
+        var orariTesto = sede.orariSede && sede.orariSede.length > 0
+          ? sede.orariSede.map(function(h){ return h+':00'; }).join(' · ')
+          : 'Non configurato';
+
+        card.innerHTML =
+          '<div style="font-weight:600;color:var(--blu);font-size:0.95rem;margin-bottom:0.8rem;">' +
+            '&#128205; ' + (sede.nome || sede.citta) +
+          '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:1rem;">' +
+            '<div style="font-size:0.82rem;"><span style="color:var(--grigio);display:block;margin-bottom:0.15rem;">Giorni apertura sede</span>' +
+              '<strong style="color:' + (sede.giorniSede && sede.giorniSede.length > 0 ? 'var(--testo)' : 'var(--arancio)') + ';">' + giorniTesto + '</strong></div>' +
+            '<div style="font-size:0.82rem;"><span style="color:var(--grigio);display:block;margin-bottom:0.15rem;">Orari slot sede</span>' +
+              '<strong style="color:' + (sede.orariSede && sede.orariSede.length > 0 ? 'var(--testo)' : 'var(--arancio)') + ';">' + orariTesto + '</strong></div>' +
+          '</div>' +
+          '<div style="background:var(--cielo);border-radius:7px;padding:0.9rem;border:1px solid var(--bordo);">' +
+            '<p style="font-size:0.72rem;color:var(--azzurro);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.7rem;">Modifica disponibilità sede</p>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.7rem;">' +
+              '<div class="input-group" style="margin-bottom:0;">' +
+                '<label style="font-size:0.72rem;">Giorni apertura <span style="font-weight:400;">(1=Lun...7=Dom)</span></label>' +
+                '<input type="text" id="sed-giorni-' + sede.id + '" value="' + giorniAttuali + '" placeholder="Es. 1,4 (lun,gio)" />' +
+              '</div>' +
+              '<div class="input-group" style="margin-bottom:0;">' +
+                '<label style="font-size:0.72rem;">Orari slot sede <span style="font-weight:400;">(formato 24h)</span></label>' +
+                '<input type="text" id="sed-orari-' + sede.id + '" value="' + orariAttuali + '" placeholder="Es. 9,11" />' +
+              '</div>' +
+            '</div>' +
+            '<button onclick="salvaSede(' + sede.id + ')" style="font-size:0.78rem;padding:0.45rem 1rem;background:var(--azzurro);color:white;border:none;border-radius:6px;cursor:pointer;font-family:Raleway,sans-serif;font-weight:600;">Salva disponibilità</button>' +
+            '<span id="sed-msg-' + sede.id + '" style="font-size:0.78rem;margin-left:0.8rem;display:none;"></span>' +
+          '</div>';
+        lista.appendChild(card);
+      });
+    })
+    .catch(function() {
+      lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.85rem;">Errore nel caricamento.</div>';
+    });
+}
+
+async function salvaSede(sedeId) {
+  var giorni = document.getElementById('sed-giorni-' + sedeId).value.trim();
+  var orari  = document.getElementById('sed-orari-'  + sedeId).value.trim();
+  var msg    = document.getElementById('sed-msg-' + sedeId);
+  try {
+    var url = SCRIPT_URL + '?action=salvaSedDisponibilita' +
+      '&sedeId='       + encodeURIComponent(sedeId) +
+      '&responsabile=' + encodeURIComponent(currentUser.username) +
+      '&giorni='       + encodeURIComponent(giorni) +
+      '&orari='        + encodeURIComponent(orari);
+    var resp = await fetch(url);
+    var data = await resp.json();
+    msg.style.display = 'inline';
+    if (data.ok) {
+      msg.style.color = 'var(--verde)'; msg.textContent = '✓ Salvato!';
+      setTimeout(caricaMieSedi, 1000);
+    } else {
+      msg.style.color = 'var(--rosso)'; msg.textContent = '⚠ ' + (data.error || 'Errore.');
+    }
+  } catch(e) {
+    msg.style.display = 'inline'; msg.style.color = 'var(--rosso)'; msg.textContent = '⚠ Errore di connessione.';
+  }
+}
+
+// ============================================================
 // PANNELLO MEDIATORE
 // ============================================================
+function entraMedPanel() {
+  showMediatore();
+  // Mostra il pulsante "torna admin" solo se l'utente e' admin
+  var backBtn = document.getElementById('med-btn-back-admin');
+  if (backBtn && currentUser && currentUser.role === 'admin') {
+    backBtn.style.display = 'inline-block';
+  }
+}
+
+function tornaAdmin() {
+  document.getElementById('mediatore-screen').style.display = 'none';
+  showAdmin();
+}
+
 function showMediatore() {
   ['login-screen','firstlogin-screen','admin-screen','app-screen'].forEach(function(id) {
     document.getElementById(id).style.display = 'none';
@@ -2941,12 +3080,13 @@ function showMediatore() {
 }
 
 function showMedTab(tab) {
-  ['prenotazioni','config','pwd'].forEach(function(t) {
+  ['prenotazioni','sedi','config','pwd'].forEach(function(t) {
     document.getElementById('med-tab-' + t).style.display = tab === t ? 'block' : 'none';
     var btn = document.getElementById('med-tab-btn-' + t);
     if (btn) btn.classList.toggle('active', tab === t);
   });
   if (tab === 'config') caricaMiaConfig();
+  if (tab === 'sedi') caricaMieSedi();
 }
 
 function caricaPrenotazioniMediatore() {
@@ -3020,28 +3160,34 @@ function caricaPrenotazioniMediatore() {
 
 function caricaMiaConfig() {
   document.getElementById('med-cfg-loading').style.display = 'block';
+  document.getElementById('med-cfg-loading').textContent   = 'Caricamento...';
   document.getElementById('med-cfg-form').style.display    = 'none';
   fetch(SCRIPT_URL + '?action=getMediatorConfig&username=' + encodeURIComponent(currentUser.username))
     .then(function(r) { return r.json(); })
     .then(function(data) {
       document.getElementById('med-cfg-loading').style.display = 'none';
-      if (!data.ok) {
-        document.getElementById('med-cfg-loading').textContent = 'Configurazione non trovata.';
-        document.getElementById('med-cfg-loading').style.display = 'block';
-        return;
-      }
-      document.getElementById('med-cfg-nome').value    = data.nome || '';
-      document.getElementById('med-cfg-email').value   = data.emailAvvisi || '';
-      document.getElementById('med-cfg-sedi').value    = (data.sediPresenza || []).join(',');
-      document.getElementById('med-cfg-giorni').value  = (data.giorni || []).join(',');
-      document.getElementById('med-cfg-orari').value   = (data.orari  || []).join(',');
-      document.getElementById('med-cfg-daysmin').value = data.daysMin || 22;
-      document.getElementById('med-cfg-daysmax').value = data.daysMax || 40;
-      document.getElementById('med-cfg-online').checked = !!data.online;
+      // Popola il form anche se non trovato (valori di default)
+      var d = data.ok ? data : {};
+      document.getElementById('med-cfg-nome').value    = d.nome || currentUser.username;
+      document.getElementById('med-cfg-email').value   = d.emailAvvisi || (currentUser.emailAccount || '');
+      document.getElementById('med-cfg-sedi').value    = (d.sediPresenza || []).join(',');
+      document.getElementById('med-cfg-giorni').value  = (d.giorni || [1,2,3,4]).join(',');
+      document.getElementById('med-cfg-orari').value   = (d.orari  || [9,11,15,17]).join(',');
+      document.getElementById('med-cfg-daysmin').value = d.daysMin || 22;
+      document.getElementById('med-cfg-daysmax').value = d.daysMax || 40;
+      document.getElementById('med-cfg-online').checked = !!d.online;
       document.getElementById('med-cfg-form').style.display = 'block';
+      if (!data.ok) {
+        var msg = document.getElementById('med-cfg-msg');
+        msg.style.display = 'block';
+        msg.style.background = '#fef9e7';
+        msg.style.color = '#7d6608';
+        msg.textContent = 'Configurazione non ancora salvata. Compila i campi e clicca Salva.';
+      }
     })
     .catch(function() {
-      document.getElementById('med-cfg-loading').textContent = 'Errore nel caricamento.';
+      document.getElementById('med-cfg-loading').textContent = 'Errore nel caricamento. Riprova.';
+      document.getElementById('med-cfg-loading').style.display = 'block';
     });
 }
 
@@ -3241,10 +3387,12 @@ window.onload = async function() {
     <span>Connesso come: <strong id="med-topbar-username"></strong>
       <span class="badge badge-mediatore" style="margin-left:0.5rem;">Mediatore</span>
     </span>
+    <button id="med-btn-back-admin" class="btn-topbar" onclick="tornaAdmin()" style="display:none;">&#8592; Pannello Admin</button>
     <button class="btn-topbar" onclick="doLogout()">Esci</button>
   </div>
   <div style="background:var(--blu); padding:0 1.5rem; display:flex; gap:0.5rem; overflow-x:auto;">
     <button class="btn-admin-nav" id="med-tab-btn-prenotazioni" onclick="showMedTab('prenotazioni')">&#128203; Le mie prenotazioni</button>
+    <button class="btn-admin-nav" id="med-tab-btn-sedi" onclick="showMedTab('sedi')">&#128205; Le mie sedi</button>
     <button class="btn-admin-nav" id="med-tab-btn-config" onclick="showMedTab('config')">&#9881; La mia configurazione</button>
     <button class="btn-admin-nav" id="med-tab-btn-pwd" onclick="showMedTab('pwd')">&#128273; Password</button>
   </div>
@@ -3293,6 +3441,20 @@ window.onload = async function() {
         </div>
       </div>
     </div>
+
+    <div id="med-tab-sedi" style="display:none">
+      <div class="admin-card">
+        <h3>&#128205; Le mie sedi</h3>
+        <p style="font-size:0.82rem; color:var(--grigio); margin-bottom:1.2rem; line-height:1.6;">
+          Qui configuri i giorni e gli orari in cui le sedi di cui sei responsabile sono disponibili per le prenotazioni.<br>
+          <strong>Attenzione:</strong> gli slot finali per l&#39;utente sono l&#39;intersezione tra la tua agenda personale e la disponibilit&#224; della sede.
+        </p>
+        <div id="med-sedi-lista">
+          <div style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>
+        </div>
+      </div>
+    </div>
+
     <div id="med-tab-pwd" style="display:none">
       <div class="admin-card">
         <h3>&#128273; Cambia password</h3>
