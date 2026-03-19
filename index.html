@@ -906,6 +906,7 @@
       <button class="btn-admin-nav" onclick="entraMedPanel()" style="background:rgba(26,122,94,0.15);color:#1a7a5e;">&#9878; Vista Mediatore</button>
       <button class="btn-admin-nav" onclick="doLogout()" style="background:rgba(192,57,43,0.12);color:var(--rosso);">Esci</button>
   </div>
+  </div>
 
   <div class="admin-main">
 
@@ -1673,11 +1674,11 @@ function goToApp() {
     if (alertBanner) alertBanner.style.display = 'none';
   }
 
-  // Inizializza sede/mediatore e poi carica slots
-  if (!window._slotsLoaded) {
-    window._slotsLoaded = true;
-    inizializzaSedeMediatore();
-  }
+  // Inizializza sede/mediatore e poi carica slots (sempre al goToApp)
+  window._slotsLoaded = false;
+  window._mediatoreSelezionato = '';
+  window._sedeSelezionata = '';
+  inizializzaSedeMediatore();
 }
 
 function showAdminTab(tab) {
