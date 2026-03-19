@@ -1599,24 +1599,8 @@ function goToApp() {
   inizializzaSedeMediatore();
 }
 
-function showAdminTab(tab) {
-  document.getElementById('admin-tab-users').style.display    = tab === 'users'   ? 'block' : 'none';
-  document.getElementById('admin-tab-pwd').style.display      = tab === 'pwd'     ? 'block' : 'none';
-  document.getElementById('admin-tab-prenota').style.display  = tab === 'prenota' ? 'block' : 'none';
-  document.getElementById('admin-tab-config').style.display   = tab === 'config'  ? 'block' : 'none';
-  document.getElementById('admin-tab-vedi').style.display     = tab === 'vedi'    ? 'block' : 'none';
-  if (tab === 'prenota' && !window._adminSlotsLoaded) {
-    window._adminSlotsLoaded = true;
-    loadAdminSlots();
-  }
-  if (tab === 'config' && !window._configLoaded) {
-    window._configLoaded = true;
-    loadConfig();
-  }
-  if (tab === 'vedi') {
-    caricaTuttePrenotazioni();
-  }
-}
+// showAdminTab — see updated version below
+
 
 function showRememberInfo() {
   document.getElementById('remember-modal').style.display = 'flex';
@@ -2843,44 +2827,10 @@ function cancella(eventId, nome, dataPren) {
 // ============================================================
 // IMPOSTAZIONI EMAIL ACCOUNT
 // ============================================================
-function mostraImpostaEmail() {
-  var modal = document.getElementById('impostazioni-modal');
-  var inp   = document.getElementById('impostazioni-email');
-  inp.value = (currentUser && currentUser.emailAccount) ? currentUser.emailAccount : '';
-  document.getElementById('impostazioni-msg').style.display = 'none';
-  modal.style.display = 'flex';
-}
 
-function chiudiImpostazioniEmail() {
-  document.getElementById('impostazioni-modal').style.display = 'none';
-}
 
-async function salvaImpostazioniEmail() {
-  var email = document.getElementById('impostazioni-email').value.trim();
-  var msg   = document.getElementById('impostazioni-msg');
-  if (!email || !email.includes('@')) {
-    msg.style.display = 'block'; msg.style.background = '#fdecea'; msg.style.color = 'var(--rosso)';
-    msg.textContent = '⚠ Inserisci una email valida.'; return;
-  }
-  try {
-    var resp = await fetch(SCRIPT_URL + '?action=setEmailAccount&username=' + encodeURIComponent(currentUser.username) + '&email=' + encodeURIComponent(email));
-    var data = await resp.json();
-    if (data.ok) {
-      currentUser.emailAccount = email;
-      setSession(currentUser, !!localStorage.getItem('mediazione_session_remember'));
-      msg.style.display = 'block'; msg.style.background = '#d5f5e3'; msg.style.color = 'var(--verde)';
-      msg.textContent = '✓ Email salvata con successo.';
-      document.getElementById('email-missing-alert').style.display = 'none';
-      setTimeout(chiudiImpostazioniEmail, 1200);
-    } else {
-      msg.style.display = 'block'; msg.style.background = '#fdecea'; msg.style.color = 'var(--rosso)';
-      msg.textContent = '⚠ ' + (data.error || 'Errore nel salvataggio.');
-    }
-  } catch(e) {
-    msg.style.display = 'block'; msg.style.background = '#fdecea'; msg.style.color = 'var(--rosso)';
-    msg.textContent = '⚠ Errore di connessione.';
-  }
-}
+
+
 
 
 // ============================================================
