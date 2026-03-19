@@ -904,6 +904,8 @@
       <button class="btn-admin-nav" onclick="showAdminTab('pwd')">&#128273; Password</button>
       <button class="btn-admin-nav" onclick="goToApp()">&#128197; App</button>
       <button class="btn-admin-nav" onclick="entraMedPanel()" style="background:rgba(26,122,94,0.15);color:#1a7a5e;">&#9878; Vista Mediatore</button>
+      <button class="btn-admin-nav" onclick="doLogout()" style="background:rgba(192,57,43,0.15);color:#c0392b;">&#128682; Esci</button>
+    </div>
   </div>
 
   <div class="admin-main">
@@ -2453,7 +2455,12 @@ function caricaMediatoreCfg(username) {
   fetch(SCRIPT_URL + '?action=getMediatorConfig&username=' + encodeURIComponent(username))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (!data.ok) return;
+      if (!data.ok) {
+        document.getElementById('sede-mediatore-bar').style.display = 'none';
+        window._mediatoreSelezionato = username;
+        ricaricaSlots();
+        return;
+      }
       window._mediatoreCfg         = data;
       window._mediatoreSelezionato = data.username;
       window._mediatoreNome        = data.nome;
