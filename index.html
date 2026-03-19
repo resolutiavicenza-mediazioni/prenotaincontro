@@ -3213,6 +3213,8 @@ window.onload = async function() {
     currentUser = session;
     if (session.role === 'admin') {
       showAdmin();
+    } else if (session.role === 'mediatore') {
+      showMediatore();
     } else {
       goToApp();
     }
