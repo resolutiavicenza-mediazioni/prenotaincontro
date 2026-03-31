@@ -1980,3 +1980,1468 @@ function renderSlots(slots) {
       el.className = 'slot-item';
       el.innerHTML =
         '<div>' +
+          '<div class="slot-day">' + dayPart + '</div>' +
+          '<div class="slot-time">' + timePart + '</div>' +
+        '</div>' +
+        '<div class="slot-arrow">→</div>';
+
+      el.onclick = function() { selectSlot(slot, el); };
+      mg.appendChild(el);
+    });
+
+    container.appendChild(mg);
+  });
+}
+
+function selectSlot(slot, el) {
+  document.querySelectorAll('.slot-item').forEach(function(s) {
+    s.classList.remove('selected');
+  });
+  el.classList.add('selected');
+  selectedSlot = slot;
+  setTimeout(function() { goTo(2); }, 300);
+}
+
+function goToSummary() {
+  const nome     = document.getElementById('input-nome').value.trim();
+  const email    = document.getElementById('input-email').value.trim();
+  const parte    = document.getElementById('input-parte').value.trim();
+  const rg       = document.getElementById('input-rg').value.trim().toUpperCase();
+  const modalita = document.querySelector('input[name="modalita"]:checked').value;
+  var sedeSelezionata = window._sedeSelezionata || '';
+  var mediatoreSelezionato = window._mediatoreSelezionato || '';
+  const modalitaStr = modalita === 'telematica' ? 'Telematica (da remoto)' : ('In presenza - ' + (sedeSelezionata || 'Vicenza'));
+  const status = document.getElementById('status-form');
+
+  if (!nome)  { showError(status, 'Inserisci il tuo nome e cognome.'); return; }
+  if (!email || !email.includes('@')) { showError(status, 'Inserisci un indirizzo email valido.'); return; }
+  if (!rg && !parte) { showError(status, 'Inserisci il numero R.G. oppure il nome della parte istante.'); return; }
+  status.style.display = 'none';
+
+  const parts = selectedSlot.display.split(' — ');
+  document.getElementById('summary-box').innerHTML =
+    row('Data', parts[0] || selectedSlot.display) +
+    row('Orario', parts[1] || '') +
+    row('Durata', '2 ore') +
+    row('Richiedente', nome) +
+    row('Email', email) +
+    row('Parte istante', parte) +
+    (rg ? row('R.G.', rg) : '') +
+    row('Sede', sedeSelezionata || 'Vicenza') +
+    row('Mediatore', (window._mediatoreNome || window._mediatoreSelezionato || '')) +
+    row('Modalità', modalitaStr);
+
+  goTo(3);
+}
+
+function row(label, value) {
+  return '<div class="summary-row"><span class="summary-label">' + label + '</span><span class="summary-value">' + value + '</span></div>';
+}
+
+function confirmBooking() {
+  const btn      = document.getElementById('confirm-btn');
+  const status   = document.getElementById('status-confirm');
+  const nome     = document.getElementById('input-nome').value.trim();
+  const email    = document.getElementById('input-email').value.trim();
+  const parte    = document.getElementById('input-parte').value.trim();
+  const rg       = document.getElementById('input-rg').value.trim().toUpperCase();
+  const modalita = document.querySelector('input[name="modalita"]:checked').value;
+  const modalitaStr = modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)';
+
+  btn.disabled = true;
+  status.className = 'status-msg loading';
+  status.innerHTML = '<div class="mini-spin"></div> Creazione appuntamento in corso…';
+
+  var sedeConf = window._sedeSelezionata || '';
+  var mediConf = window._mediatoreSelezionato || '';
+  const modalitaStr2 = modalita === 'telematica' ? 'Telematica (da remoto)' : ('In presenza - ' + (sedeConf || 'Vicenza'));
+  const url = SCRIPT_URL +
+    '?action=book' +
+    '&start='        + encodeURIComponent(selectedSlot.start) +
+    '&end='          + encodeURIComponent(selectedSlot.end) +
+    '&nome='         + encodeURIComponent(nome) +
+    '&email='        + encodeURIComponent(email) +
+    '&parteIstante=' + encodeURIComponent(parte) +
+    '&modalita='     + encodeURIComponent(modalita) +
+    '&rg='           + encodeURIComponent(rg) +
+    '&username='     + encodeURIComponent(currentUser ? currentUser.username : '') +
+    '&mediatore='    + encodeURIComponent(mediConf) +
+    '&sede='         + encodeURIComponent(sedeConf);
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        var meetHtml = data.meetLink
+          ? '<br>🎥 <strong>Google Meet:</strong> <a href="' + data.meetLink + '" target="_blank" style="color:var(--verde);">' + data.meetLink + '</a>'
+          : '';
+        document.getElementById('success-detail').innerHTML =
+          '📅 ' + selectedSlot.display + '<br>' +
+          '👤 ' + nome + '<br>' +
+          '✉️ ' + email + '<br>' +
+          '⚖️ Parte istante: ' + parte + '<br>' +
+          (rg ? '📋 R.G.: ' + rg + '<br>' : '') +
+          '📍 Modalità: ' + modalitaStr +
+          meetHtml;
+        goTo(4);
+      } else {
+        showError(status, data.error || 'Errore nella prenotazione. Riprova.');
+        btn.disabled = false;
+      }
+    })
+    .catch(function() {
+      showError(status, 'Errore di rete. Riprova più tardi.');
+      btn.disabled = false;
+    });
+}
+
+function goTo(n) {
+  document.querySelectorAll('.panel').forEach(function(p, i) {
+    p.classList.toggle('active', i === n - 1);
+  });
+
+  for (var i = 1; i <= 3; i++) {
+    var el = document.getElementById('step-' + i);
+    if (!el) continue;
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+
+  var pct = Math.min(n * 25, 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showError(el, msg) {
+  el.className = 'status-msg error';
+  el.innerHTML = '⚠ ' + msg;
+}
+
+// ============================================================
+// ADMIN BOOKING — prenotazione diretta dal pannello admin
+// ============================================================
+var adminSelectedSlot = null;
+
+function loadAdminSlots() {
+  fetch(SCRIPT_URL + '?action=getSlots')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('admin-loading-box').style.display = 'none';
+      if (!data.ok) {
+        document.getElementById('admin-loading-box').innerHTML =
+          '<p style="color:var(--rosso); font-size:0.85rem;">Errore: ' + (data.error || 'impossibile caricare gli slot.') + '</p>';
+        document.getElementById('admin-loading-box').style.display = 'block';
+        return;
+      }
+      var slots = data.slots || [];
+      renderAdminSlots(slots);
+      document.getElementById('admin-slots-wrapper').style.display = 'block';
+    })
+    .catch(function() {
+      document.getElementById('admin-loading-box').innerHTML =
+        '<p style="color:var(--rosso); font-size:0.85rem;">Errore di connessione.</p>';
+    });
+}
+
+function renderAdminSlots(slots) {
+  var container = document.getElementById('admin-slots-container');
+  if (!slots || slots.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:var(--grigio); font-size:0.88rem; padding:2rem 0;">Nessuno slot disponibile nel periodo consentito.</p>';
+    return;
+  }
+  var mesi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+              'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var groups = {};
+  slots.forEach(function(slot) {
+    var d = new Date(slot.start);
+    var key = mesi[d.getMonth()] + ' ' + d.getFullYear();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(slot);
+  });
+  container.innerHTML = '';
+  Object.keys(groups).forEach(function(month) {
+    var mg = document.createElement('div');
+    mg.className = 'month-group';
+    mg.innerHTML = '<div class="month-label">' + month + '</div>';
+    groups[month].forEach(function(slot) {
+      var parts = slot.display.split(' — ');
+      var el = document.createElement('div');
+      el.className = 'slot-item';
+      el.innerHTML =
+        '<div>' +
+          '<div class="slot-day">' + (parts[0] || slot.display) + '</div>' +
+          '<div class="slot-time">' + (parts[1] || '') + '</div>' +
+        '</div>' +
+        '<div class="slot-arrow">→</div>';
+      el.onclick = function() {
+        document.querySelectorAll('#admin-slots-container .slot-item').forEach(function(s) {
+          s.classList.remove('selected');
+        });
+        el.classList.add('selected');
+        adminSelectedSlot = slot;
+        document.getElementById('admin-selected-display').textContent = slot.display;
+        setTimeout(function() { showAdminStep('form'); }, 250);
+      };
+      mg.appendChild(el);
+    });
+    container.appendChild(mg);
+  });
+}
+
+function showAdminStep(step) {
+  document.getElementById('admin-step-slot').style.display    = step === 'slot'    ? 'block' : 'none';
+  document.getElementById('admin-step-form').style.display    = step === 'form'    ? 'block' : 'none';
+  document.getElementById('admin-step-success').style.display = step === 'success' ? 'block' : 'none';
+}
+
+function adminSincronizzaCampi() {
+  var rgVal   = document.getElementById('admin-input-rg').value.trim();
+  var parteEl = document.getElementById('admin-input-parte');
+  var gruppo  = document.getElementById('admin-gruppo-parte');
+  if (rgVal.length > 0) {
+    parteEl.value = '';
+    parteEl.disabled = true;
+    parteEl.placeholder = 'Non necessario — R.G. già inserito';
+    gruppo.style.opacity = '0.45';
+  } else {
+    parteEl.disabled = false;
+    parteEl.placeholder = 'Es. Mario Rossi o Azienda Srl';
+    gruppo.style.opacity = '1';
+  }
+}
+
+function adminResetForm() {
+  document.getElementById('admin-input-nome').value  = '';
+  document.getElementById('admin-input-email').value = '';
+  document.getElementById('admin-input-rg').value    = '';
+  document.getElementById('admin-input-parte').value = '';
+  document.getElementById('admin-input-parte').disabled = false;
+  document.getElementById('admin-gruppo-parte').style.opacity = '1';
+  document.querySelector('input[name="admin-modalita"][value="presenza"]').checked = true;
+  adminSelectedSlot = null;
+  document.getElementById('admin-status-form').style.display = 'none';
+}
+
+function adminConfirmBooking() {
+  var btn      = document.getElementById('admin-confirm-btn');
+  var status   = document.getElementById('admin-status-form');
+  var nome     = document.getElementById('admin-input-nome').value.trim();
+  var email    = document.getElementById('admin-input-email').value.trim();
+  var rg       = document.getElementById('admin-input-rg').value.trim().toUpperCase();
+  var parte    = document.getElementById('admin-input-parte').value.trim();
+  var modalita = document.querySelector('input[name="admin-modalita"]:checked').value;
+
+  status.style.display = 'none';
+  if (!adminSelectedSlot) {
+    status.style.display = 'block'; status.style.background = '#fdecea';
+    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Nessuna data selezionata.'; return;
+  }
+  if (!nome) {
+    status.style.display = 'block'; status.style.background = '#fdecea';
+    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Inserisci il nome della parte.'; return;
+  }
+  if (!email || !email.includes('@')) {
+    status.style.display = 'block'; status.style.background = '#fdecea';
+    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Inserisci un email valida.'; return;
+  }
+  if (!rg && !parte) {
+    status.style.display = 'block'; status.style.background = '#fdecea';
+    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Inserisci R.G. o nome parte istante.'; return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Creazione in corso…';
+
+  var url = SCRIPT_URL +
+    '?action=bookAdmin' +
+    '&username='     + encodeURIComponent(currentUser ? currentUser.username : '') +
+    '&start='        + encodeURIComponent(adminSelectedSlot.start) +
+    '&end='          + encodeURIComponent(adminSelectedSlot.end) +
+    '&nome='         + encodeURIComponent(nome) +
+    '&email='        + encodeURIComponent(email) +
+    '&parteIstante=' + encodeURIComponent(parte || rg) +
+    '&modalita='     + encodeURIComponent(modalita) +
+    '&rg='           + encodeURIComponent(rg) +
+    '&username='     + encodeURIComponent(currentUser ? currentUser.username : '');
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = '✓ Conferma e invia email alla parte';
+      if (data.ok) {
+        var meetHtml = data.meetLink
+          ? '<br>🎥 <strong>Google Meet:</strong> <a href="' + data.meetLink + '" target="_blank" style="color:var(--verde);">' + data.meetLink + '</a>'
+          : '';
+        document.getElementById('admin-success-detail').innerHTML =
+          '📅 ' + adminSelectedSlot.display + '<br>' +
+          '👤 ' + nome + '<br>' +
+          '✉️ ' + email + '<br>' +
+          (rg ? '📋 R.G.: ' + rg + '<br>' : '⚖️ ' + parte + '<br>') +
+          '📍 ' + (modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)') +
+          meetHtml;
+        showAdminStep('success');
+      } else {
+        status.style.display = 'block';
+        status.style.background = '#fdecea';
+        status.style.color = 'var(--rosso)';
+        status.textContent = '⚠ ' + (data.error || 'Errore nella prenotazione.');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = '✓ Conferma e invia email alla parte';
+      status.style.display = 'block';
+      status.style.background = '#fdecea';
+      status.style.color = 'var(--rosso)';
+      status.textContent = '⚠ Errore di rete. Riprova.';
+    });
+}
+
+// ============================================================
+// SINCRONIZZAZIONE CAMPI R.G. / PARTE (alternativi)
+// ============================================================
+function sincronizzaCampi() {
+  var rgVal    = document.getElementById('input-rg').value.trim();
+  var parteEl  = document.getElementById('input-parte');
+  var gruppoEl = document.getElementById('gruppo-parte');
+
+  if (rgVal.length > 0) {
+    // R.G. compilato → disabilita e svuota campo parte
+    parteEl.value = '';
+    parteEl.disabled = true;
+    parteEl.placeholder = 'Non necessario — R.G. già inserito';
+    gruppoEl.style.opacity = '0.45';
+  } else {
+    // R.G. vuoto → riabilita campo parte
+    parteEl.disabled = false;
+    parteEl.placeholder = 'Es. Mario Rossi o Azienda Srl';
+    gruppoEl.style.opacity = '1';
+  }
+}
+
+// ============================================================
+// CONFIGURAZIONE ADMIN
+// ============================================================
+
+function loadConfig() {
+  fetch(SCRIPT_URL + '?action=getConfig')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('config-loading').style.display = 'none';
+      if (!data.ok) {
+        document.getElementById('sede-mediatore-bar').style.display = 'none';
+        window._mediatoreSelezionato = username;
+        ricaricaSlots();
+        return;
+      }
+      var cfg = {};
+      data.config.forEach(function(item) { cfg[item.key] = item.value; });
+
+      // Popola campi
+      document.getElementById('cfg-slot-hours').value     = cfg['slot_hours']        || '9,11,15,17';
+      document.getElementById('cfg-slot-duration').value  = cfg['slot_duration']     || '2';
+      document.getElementById('cfg-days-min').value       = cfg['days_min']          || '22';
+      document.getElementById('cfg-days-max').value       = cfg['days_max']          || '40';
+      document.getElementById('cfg-nome-mediatore').value = cfg['nome_mediatore']    || '';
+      document.getElementById('cfg-email-avviso').value   = cfg['email_avviso']      || '';
+      document.getElementById('cfg-email-cc').value       = cfg['email_cc']          || '';
+      document.getElementById('cfg-nome-firma').value     = cfg['nome_firma']        || '';
+      document.getElementById('cfg-sede-firma').value     = cfg['sede_firma']        || '';
+      document.getElementById('cfg-email-firma').value    = cfg['email_firma']       || '';
+      document.getElementById('cfg-titolo-app').value     = cfg['titolo_app']        || '';
+      document.getElementById('cfg-sottotitolo-app').value= cfg['sottotitolo_app']   || '';
+      document.getElementById('cfg-drive-root').value     = cfg['drive_root_folder'] || '';
+
+      // Checkbox giorni
+      var giorni = (cfg['giorni_disponibili'] || '1,2,3,4').split(',').map(function(x){ return x.trim(); });
+      document.querySelectorAll('.cfg-giorno').forEach(function(cb) {
+        cb.checked = giorni.indexOf(cb.value) !== -1;
+      });
+
+      document.getElementById('config-form').style.display = 'block';
+    })
+    .catch(function() {
+      document.getElementById('config-loading').textContent = 'Errore nel caricamento della configurazione.';
+    });
+}
+
+function saveConfig() {
+  var btn = document.getElementById('cfg-save-btn');
+  var msg = document.getElementById('cfg-msg');
+  msg.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Salvataggio…';
+
+  // Raccoglie giorni selezionati
+  var giorni = [];
+  document.querySelectorAll('.cfg-giorno:checked').forEach(function(cb) {
+    giorni.push(cb.value);
+  });
+
+  var items = [
+    { key: 'slot_hours',         value: document.getElementById('cfg-slot-hours').value.trim() },
+    { key: 'slot_duration',      value: document.getElementById('cfg-slot-duration').value.trim() },
+    { key: 'days_min',           value: document.getElementById('cfg-days-min').value.trim() },
+    { key: 'days_max',           value: document.getElementById('cfg-days-max').value.trim() },
+    { key: 'giorni_disponibili', value: giorni.join(',') },
+    { key: 'nome_mediatore',     value: document.getElementById('cfg-nome-mediatore').value.trim() },
+    { key: 'email_avviso',       value: document.getElementById('cfg-email-avviso').value.trim() },
+    { key: 'email_cc',           value: document.getElementById('cfg-email-cc').value.trim() },
+    { key: 'nome_firma',         value: document.getElementById('cfg-nome-firma').value.trim() },
+    { key: 'sede_firma',         value: document.getElementById('cfg-sede-firma').value.trim() },
+    { key: 'email_firma',        value: document.getElementById('cfg-email-firma').value.trim() },
+    { key: 'titolo_app',         value: document.getElementById('cfg-titolo-app').value.trim() },
+    { key: 'sottotitolo_app',    value: document.getElementById('cfg-sottotitolo-app').value.trim() },
+    { key: 'drive_root_folder',  value: document.getElementById('cfg-drive-root').value.trim() }
+  ];
+
+  fetch(SCRIPT_URL + '?action=saveConfig&items=' + encodeURIComponent(JSON.stringify(items)))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = '💾 Salva configurazione';
+      msg.style.display = 'block';
+      if (data.ok) {
+        msg.style.background = '#d5f5e3';
+        msg.style.color = 'var(--verde)';
+        msg.textContent = '✓ Configurazione salvata. Le modifiche sono attive immediatamente.';
+        // Reset cache slot per prossimo caricamento
+        window._adminSlotsLoaded = false;
+        window._slotsLoaded = false;
+      } else {
+        msg.style.background = '#fdecea';
+        msg.style.color = 'var(--rosso)';
+        msg.textContent = '⚠ Errore: ' + (data.error || 'impossibile salvare.');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = '💾 Salva configurazione';
+      msg.style.display = 'block';
+      msg.style.background = '#fdecea';
+      msg.style.color = 'var(--rosso)';
+      msg.textContent = '⚠ Errore di rete.';
+    });
+}
+
+// ============================================================
+// SEDE E MEDIATORE
+// ============================================================
+window._mediatoreSelezionato = '';
+window._mediatoreNome        = '';
+window._sedeSelezionata      = '';
+window._mediatoreCfg         = null;
+
+function inizializzaSedeMediatore() {
+  // Mediatore di default = chi ha creato l'account
+  var creatoDa = currentUser && currentUser.creatoDa ? currentUser.creatoDa : '';
+  if (creatoDa) {
+    caricaMediatoreCfg(creatoDa);
+  } else {
+    fetch(SCRIPT_URL + '?action=getMediatori&tipo=')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok && data.mediatori && data.mediatori.length > 0) {
+          caricaMediatoreCfg(data.mediatori[0].username);
+        } else { ricaricaSlots(); }
+      })
+      .catch(function() { ricaricaSlots(); });
+  }
+}
+
+function caricaMediatoreCfg(username) {
+  fetch(SCRIPT_URL + '?action=getMediatorConfig&username=' + encodeURIComponent(username))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) {
+        document.getElementById('sede-mediatore-bar').style.display = 'none';
+        window._mediatoreSelezionato = username;
+        ricaricaSlots();
+        return;
+      }
+      window._mediatoreCfg         = data;
+      window._mediatoreSelezionato = data.username;
+      window._mediatoreNome        = data.nome;
+
+      // Popola select sede
+      var select = document.getElementById('select-sede');
+      select.innerHTML = '';
+      if (data.sediPresenza && data.sediPresenza.length > 0) {
+        data.sediPresenza.forEach(function(s) {
+          var opt = document.createElement('option');
+          opt.value = s; opt.textContent = s;
+          select.appendChild(opt);
+        });
+      }
+      if (data.online) {
+        var opt = document.createElement('option');
+        opt.value = 'Telematica'; opt.textContent = 'Telematica (da remoto)';
+        select.appendChild(opt);
+      }
+
+      // Mostra la barra
+      document.getElementById('sede-mediatore-bar').style.display = 'block';
+      document.getElementById('mediatore-nome').textContent = data.nome;
+
+      // Imposta sede default
+      if (select.options.length > 0) {
+        window._sedeSelezionata = select.options[0].value;
+        aggiornaModalitaDaSede();
+      }
+
+      // Ricarica slots con config mediatore
+      ricaricaSlots();
+    })
+    .catch(function() { ricaricaSlots(); });
+}
+
+function onSedeChange() {
+  var s = document.getElementById('select-sede').value;
+  window._sedeSelezionata = s;
+  aggiornaModalitaDaSede();
+  document.getElementById('cambia-mediatore-box').style.display = 'none';
+  ricaricaSlots();
+}
+
+function aggiornaModalitaDaSede() {
+  var sede = window._sedeSelezionata;
+  var isTelematica = (sede === 'Telematica');
+  // Seleziona automaticamente la modalita radio
+  var radios = document.querySelectorAll('input[name="modalita"]');
+  radios.forEach(function(r) {
+    if (isTelematica) { r.checked = (r.value === 'telematica'); }
+    else              { r.checked = (r.value === 'presenza');   }
+  });
+  // Aggiorna label sede accanto a "In presenza"
+  var label = document.getElementById('label-sede-presenza');
+  if (label) label.textContent = isTelematica ? '' : ('(' + sede + ')');
+}
+
+function onModalitaChange() {
+  var modalita = document.querySelector('input[name="modalita"]:checked').value;
+  // Se l'utente cambia manualmente a telematica ma la sede non è telematica
+  if (modalita === 'telematica' && window._sedeSelezionata !== 'Telematica') {
+    var select = document.getElementById('select-sede');
+    for (var i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === 'Telematica') {
+        select.selectedIndex = i;
+        window._sedeSelezionata = 'Telematica';
+        break;
+      }
+    }
+  }
+  if (modalita === 'presenza' && window._sedeSelezionata === 'Telematica') {
+    var select2 = document.getElementById('select-sede');
+    if (select2.options.length > 0 && select2.options[0].value !== 'Telematica') {
+      select2.selectedIndex = 0;
+      window._sedeSelezionata = select2.options[0].value;
+    }
+  }
+  var label2 = document.getElementById('label-sede-presenza');
+  if (label2) label2.textContent = (modalita === 'presenza' && window._sedeSelezionata !== 'Telematica') ? ('(' + window._sedeSelezionata + ')') : '';
+}
+
+function ricaricaSlots() {
+  window._slotsLoaded = false;
+  var lbox = document.getElementById('loading-box');
+  var swrapper = document.getElementById('slots-wrapper');
+  if (lbox) { lbox.style.display = 'block'; lbox.innerHTML = '<div class="spinner"></div><p>Controllo disponibilita calendario...</p>'; }
+  if (swrapper) swrapper.style.display = 'none';
+  loadSlots();
+}
+
+function mostraCambiaMediatore() {
+  var box = document.getElementById('cambia-mediatore-box');
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  var sede  = window._sedeSelezionata;
+  var tipo  = sede === 'Telematica' ? 'telematica' : 'presenza';
+  var lista = document.getElementById('lista-mediatori');
+  lista.innerHTML = '<span style="font-size:0.78rem;color:var(--grigio);">Caricamento...</span>';
+  box.style.display = 'block';
+  fetch(SCRIPT_URL + '?action=getMediatori&sede=' + encodeURIComponent(sede) + '&tipo=' + encodeURIComponent(tipo))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      lista.innerHTML = '';
+      if (!data.ok || !data.mediatori || data.mediatori.length === 0) {
+        lista.innerHTML = '<span style="font-size:0.78rem;color:var(--grigio);">Nessun altro mediatore disponibile.</span>';
+        return;
+      }
+      data.mediatori.forEach(function(m) {
+        var btn = document.createElement('button');
+        btn.style.cssText = 'display:block; width:100%; text-align:left; padding:0.5rem 0.8rem; margin-bottom:0.3rem; background:' + (m.username === window._mediatoreSelezionato ? 'var(--cielo)' : 'none') + '; border:1px solid var(--bordo); border-radius:6px; cursor:pointer; font-family:Raleway,sans-serif; font-size:0.83rem; color:var(--testo);';
+        btn.textContent = m.nome + (m.username === window._mediatoreSelezionato ? ' ✓' : '');
+        (function(med) {
+          btn.onclick = function() {
+            window._mediatoreSelezionato = med.username;
+            window._mediatoreNome = med.nome;
+            document.getElementById('mediatore-nome').textContent = med.nome;
+            box.style.display = 'none';
+            caricaMediatoreCfg(med.username);
+          };
+        })(m);
+        lista.appendChild(btn);
+      });
+    });
+}
+
+// ============================================================
+// LE MIE PRENOTAZIONI
+// ============================================================
+var _miePrenotazioniVisible = false;
+
+function toggleMiePrenotazioni() {
+  _miePrenotazioniVisible = !_miePrenotazioniVisible;
+  var panel = document.getElementById('panel-mie-prenotazioni');
+  if (_miePrenotazioniVisible) {
+    // Nascondi tutti i pannelli prenotazione
+    document.querySelectorAll('.panel').forEach(function(p) { p.style.display = 'none'; });
+    panel.style.display = 'block';
+    document.getElementById('btn-mie-prenotazioni').textContent = '← Nuova prenotazione';
+    caricaMiePrenotazioni();
+  } else {
+    panel.style.display = 'none';
+    // Ripristina il pannello corrente
+    document.querySelectorAll('.panel').forEach(function(p, i) {
+      p.style.display = (i === 0) ? 'block' : 'none';
+    });
+    goTo(1);
+    document.getElementById('btn-mie-prenotazioni').textContent = '📋 Le mie prenotazioni';
+    if (!window._mediatoreSelezionato) inizializzaSedeMediatore();
+  }
+}
+
+function caricaMiePrenotazioni() {
+  var container = document.getElementById('mie-prenotazioni-container');
+  container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.88rem;">Caricamento...</div>';
+  if (!currentUser) return;
+
+  fetch(SCRIPT_URL + '?action=getMiePrenotazioni&username=' + encodeURIComponent(currentUser.username))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      container.innerHTML = '';
+      if (!data.ok || !data.prenotazioni || data.prenotazioni.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;color:var(--grigio);font-size:0.88rem;">Nessuna prenotazione trovata.</div>';
+        return;
+      }
+      data.prenotazioni.forEach(function(p) {
+        var statoColor = p.stato === 'CONFERMATO' ? 'var(--verde)' : p.stato === 'CANCELLATO' ? 'var(--rosso)' : 'var(--arancio)';
+        var statoTesto = p.stato === 'CONFERMATO' ? '\u2705 Confermato' : p.stato === 'CANCELLATO' ? '\u274c Cancellato' : '\u23f3 In attesa';
+
+        var div = document.createElement('div');
+        div.style.cssText = 'padding:1rem 0; border-bottom:1px solid var(--bordo); display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;';
+
+        // Colonna sinistra: dettagli
+        var left = document.createElement('div');
+        left.style.flex = '1';
+
+        var dDiv = document.createElement('div');
+        dDiv.style.cssText = 'font-weight:600; color:var(--blu); font-size:0.92rem; margin-bottom:0.2rem;';
+        dDiv.textContent = p.data || '—';
+        left.appendChild(dDiv);
+
+        var pDiv = document.createElement('div');
+        pDiv.style.cssText = 'font-size:0.82rem; color:var(--grigio); margin-top:0.15rem;';
+        pDiv.textContent = (p.parte || p.richiedente) + (p.rg ? ' · R.G. ' + p.rg : '');
+        left.appendChild(pDiv);
+
+        var mDiv = document.createElement('div');
+        mDiv.style.cssText = 'font-size:0.8rem; color:var(--grigio); margin-top:0.1rem;';
+        mDiv.textContent = p.modalita || '';
+        if (p.meetLink) {
+          var a = document.createElement('a');
+          a.href = p.meetLink; a.target = '_blank';
+          a.style.cssText = 'color:var(--verde); margin-left:0.5rem;';
+          a.textContent = 'Meet';
+          mDiv.appendChild(a);
+        }
+        left.appendChild(mDiv);
+
+        div.appendChild(left);
+
+        // Colonna destra: stato + cancella
+        var right = document.createElement('div');
+        right.style.cssText = 'display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem; flex-shrink:0;';
+
+        var stato = document.createElement('span');
+        stato.style.cssText = 'font-size:0.75rem; font-weight:600; color:' + statoColor + '; white-space:nowrap;';
+        stato.textContent = statoTesto;
+        right.appendChild(stato);
+
+        if (p.stato !== 'CANCELLATO') {
+          var btn = document.createElement('button');
+          btn.textContent = 'Cancella';
+          btn.style.cssText = 'font-size:0.7rem; padding:0.25rem 0.65rem; background:none; border:1.5px solid #e8bdb9; border-radius:5px; color:var(--rosso); cursor:pointer; font-family:Raleway,sans-serif; font-weight:600;';
+          btn.onmouseover = function() { this.style.background='var(--rosso)'; this.style.color='white'; };
+          btn.onmouseout  = function() { this.style.background='none'; this.style.color='var(--rosso)'; };
+          (function(eid, nome, dataPren) {
+            btn.onclick = function() { cancellaMia(eid, nome, dataPren); };
+          })(p.eventId, p.parte || p.richiedente, p.data);
+          right.appendChild(btn);
+        }
+
+        div.appendChild(right);
+        container.appendChild(div);
+      });
+
+      // Remove last border
+      var items = container.querySelectorAll('div[style*="border-bottom"]');
+      if (items.length > 0) items[items.length-1].style.borderBottom = 'none';
+    })
+    .catch(function() {
+      container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.88rem;">Errore nel caricamento.</div>';
+    });
+}
+
+
+function caricaTuttePrenotazioni() {
+  var lista   = document.getElementById('vedi-lista');
+  var count   = document.getElementById('vedi-count');
+  var filtro  = document.getElementById('vedi-filtro').value.trim();
+  var stato   = document.getElementById('vedi-stato').value;
+
+  lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>';
+  count.textContent = '';
+
+  var url = SCRIPT_URL + '?action=getTuttePrenotazioni' +
+    '&filtro=' + encodeURIComponent(filtro) +
+    '&stato='  + encodeURIComponent(stato);
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      lista.innerHTML = '';
+      if (!data.ok || !data.prenotazioni || data.prenotazioni.length === 0) {
+        lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Nessuna prenotazione trovata.</div>';
+        count.textContent = '';
+        return;
+      }
+
+      var pren = data.prenotazioni;
+      count.textContent = pren.length + ' prenotazione' + (pren.length !== 1 ? 'i' : '') + ' trovata' + (pren.length !== 1 ? 'e' : '');
+
+      pren.forEach(function(p) {
+        var statoColor = p.stato === 'CONFERMATO' ? '#1a7a5e' : p.stato === 'CANCELLATO' ? '#c0392b' : '#e67e22';
+        var statoBg    = p.stato === 'CONFERMATO' ? '#d5f5e3' : p.stato === 'CANCELLATO' ? '#fdecea' : '#fef9e7';
+        var statoTesto = p.stato === 'CONFERMATO' ? 'Confermato' : p.stato === 'CANCELLATO' ? 'Cancellato' : 'In attesa';
+
+        var div = document.createElement('div');
+        div.style.cssText = 'padding:0.9rem 0; border-bottom:1px solid var(--bordo); display:grid; grid-template-columns:1fr auto; gap:1rem; align-items:start;';
+
+        var left = document.createElement('div');
+
+        // Data e modalita
+        var dataDiv = document.createElement('div');
+        dataDiv.style.cssText = 'font-weight:600; color:var(--blu); font-size:0.9rem; margin-bottom:0.2rem;';
+        dataDiv.textContent = p.data || '—';
+        left.appendChild(dataDiv);
+
+        // Parte / R.G.
+        var parteDiv = document.createElement('div');
+        parteDiv.style.cssText = 'font-size:0.82rem; color:var(--testo); margin-bottom:0.15rem;';
+        parteDiv.textContent = (p.parte || p.richiedente || '') + (p.rg ? ' · R.G. ' + p.rg : '');
+        left.appendChild(parteDiv);
+
+        // Richiedente e username
+        var utDiv = document.createElement('div');
+        utDiv.style.cssText = 'font-size:0.78rem; color:var(--grigio);';
+        utDiv.textContent = (p.email || '') + (p.username ? ' · @' + p.username : '');
+        left.appendChild(utDiv);
+
+        // Modalita e Meet
+        var modDiv = document.createElement('div');
+        modDiv.style.cssText = 'font-size:0.78rem; color:var(--grigio); margin-top:0.1rem;';
+        modDiv.textContent = p.modalita || '';
+        if (p.meetLink) {
+          var a = document.createElement('a');
+          a.href = p.meetLink;
+          a.target = '_blank';
+          a.style.cssText = 'color:var(--verde); margin-left:0.5rem;';
+          a.textContent = 'Meet';
+          modDiv.appendChild(a);
+        }
+        left.appendChild(modDiv);
+
+        // Pulsante cancella (solo se non già cancellato) - dentro left, prima di appendere
+        if (p.stato !== 'CANCELLATO') {
+          var btnCanc = document.createElement('button');
+          btnCanc.textContent = 'Cancella';
+          btnCanc.style.cssText = 'margin-top:0.5rem; padding:0.3rem 0.8rem; background:none; border:1.5px solid #e8bdb9; border-radius:5px; color:var(--rosso); font-family:Raleway,sans-serif; font-size:0.73rem; font-weight:600; cursor:pointer; display:block;';
+          btnCanc.onmouseover = function() { this.style.background='var(--rosso)'; this.style.color='white'; };
+          btnCanc.onmouseout  = function() { this.style.background='none'; this.style.color='var(--rosso)'; };
+          (function(eid, nome, dataPren) {
+            btnCanc.onclick = function() { cancella(eid, nome, dataPren); };
+          })(p.eventId, p.richiedente, p.data);
+          left.appendChild(btnCanc);
+        }
+
+        div.appendChild(left);
+
+        // Stato badge (colonna destra)
+        var badge = document.createElement('span');
+        badge.style.cssText = 'font-size:0.72rem; font-weight:600; padding:0.25rem 0.6rem; border-radius:20px; white-space:nowrap; background:' + statoBg + '; color:' + statoColor + ';';
+        badge.textContent = statoTesto;
+        div.appendChild(badge);
+
+        lista.appendChild(div);
+      });
+
+      // Remove border from last
+      var items = lista.querySelectorAll('div[style*="border-bottom"]');
+      if (items.length > 0) items[items.length-1].style.borderBottom = 'none';
+    })
+    .catch(function() {
+      lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.85rem;">Errore nel caricamento.</div>';
+    });
+}
+
+// ============================================================
+// CANCELLA PRENOTAZIONE (admin)
+// ============================================================
+function cancellaMia(eventId, nome, dataPren) {
+  if (!confirm('Cancellare la prenotazione per ' + nome + ' del ' + dataPren + '?')) return;
+  fetch(SCRIPT_URL + '?action=cancellaPrenotazione&eventId=' + encodeURIComponent(eventId))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        caricaMiePrenotazioni();
+      } else {
+        alert('Errore: ' + (data.error || 'impossibile cancellare.'));
+      }
+    })
+    .catch(function() { alert('Errore di connessione.'); });
+}
+
+function cancella(eventId, nome, dataPren) {
+  if (!confirm('Cancellare la prenotazione di ' + nome + ' del ' + dataPren + '?\nVerra inviata email alla parte.')) return;
+
+  fetch(SCRIPT_URL + '?action=cancellaPrenotazione&eventId=' + encodeURIComponent(eventId))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        alert('Prenotazione cancellata. Email inviata a ' + data.nome + '.');
+        caricaTuttePrenotazioni();
+      } else {
+        alert('Errore: ' + (data.error || 'impossibile cancellare.'));
+      }
+    })
+    .catch(function() {
+      alert('Errore di connessione.');
+    });
+}
+
+// ============================================================
+// IMPOSTAZIONI EMAIL ACCOUNT
+// ============================================================
+
+
+
+
+
+
+// ============================================================
+// ROUTING MEDIATORE
+// ============================================================
+function showMediatore() {
+  ['login-screen','firstlogin-screen','admin-screen','app-screen'].forEach(function(id){
+    document.getElementById(id).style.display='none';
+  });
+  document.getElementById('mediatore-screen').style.display='block';
+  document.getElementById('med-topbar-username').textContent = currentUser.username;
+  showMedTab('prenotazioni');
+  caricaPrenotazioniMediatore();
+}
+function entraMedPanel() {
+  showMediatore();
+  var b=document.getElementById('med-btn-back-admin');
+  if(b && currentUser.role==='admin') b.style.display='inline-block';
+}
+function tornaAdmin() {
+  document.getElementById('mediatore-screen').style.display='none';
+  showAdmin();
+}
+function showMedTab(tab) {
+  ['prenotazioni','prenota','utenti','sedi','config','pwd'].forEach(function(t){
+    var el=document.getElementById('med-tab-'+t); if(el) el.style.display=tab===t?'block':'none';
+    var btn=document.getElementById('med-tab-btn-'+t); if(btn) btn.classList.toggle('active',tab===t);
+  });
+  if(tab==='config') caricaMiaConfig();
+  if(tab==='sedi') caricaMieSedi();
+  if(tab==='prenota'){ window._medPrenotaSlotsLoaded=false; caricaSlotsPerMediatore(); }
+  if(tab==='utenti') caricaMieiUtenti();
+}
+// Login routing
+var _origSetSession = typeof setSession === 'function' ? setSession : null;
+function routeAfterLogin(user, remember) {
+  setSession(user, remember);
+  if(user.role==='admin') showAdmin();
+  else if(user.role==='mediatore') showMediatore();
+  else goToApp();
+}
+
+// ============================================================
+// LE MIE PRENOTAZIONI (mediatore)
+// ============================================================
+function caricaPrenotazioniMediatore() {
+  var lista=document.getElementById('med-vedi-lista');
+  var count=document.getElementById('med-vedi-count');
+  var filtro=document.getElementById('med-vedi-filtro').value.trim();
+  var stato=document.getElementById('med-vedi-stato').value;
+  lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>';
+  count.textContent='';
+  fetch(SCRIPT_URL+'?action=getTuttePrenotazioni&filtro='+encodeURIComponent(filtro)+'&stato='+encodeURIComponent(stato))
+    .then(function(r){return r.json();})
+    .then(function(data){
+      lista.innerHTML='';
+      var pren=(data.prenotazioni||[]).filter(function(p){
+        return !p.mediatore||p.mediatore===''||p.mediatore.toLowerCase()===currentUser.username.toLowerCase();
+      });
+      if(pren.length===0){lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Nessuna prenotazione trovata.</div>';return;}
+      count.textContent=pren.length+' prenotazion'+(pren.length!==1?'i':'e');
+      pren.forEach(function(p){
+        var sc=p.stato==='CONFERMATO'?'#1a7a5e':p.stato==='CANCELLATO'?'#c0392b':'#e67e22';
+        var sb=p.stato==='CONFERMATO'?'#d5f5e3':p.stato==='CANCELLATO'?'#fdecea':'#fef9e7';
+        var st=p.stato==='CONFERMATO'?'Confermato':p.stato==='CANCELLATO'?'Cancellato':'In attesa';
+        var div=document.createElement('div');
+        div.style.cssText='padding:0.9rem 0;border-bottom:1px solid var(--bordo);display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:start;';
+        var left=document.createElement('div');
+        var d1=document.createElement('div');d1.style.cssText='font-weight:600;color:var(--blu);font-size:0.9rem;margin-bottom:0.2rem;';d1.textContent=p.data||'\u2014';left.appendChild(d1);
+        var d2=document.createElement('div');d2.style.cssText='font-size:0.82rem;color:var(--testo);margin-bottom:0.15rem;';d2.textContent=(p.parte||p.richiedente||'')+(p.rg?' \u00b7 R.G. '+p.rg:'');left.appendChild(d2);
+        var d3=document.createElement('div');d3.style.cssText='font-size:0.78rem;color:var(--grigio);';d3.textContent=(p.email||'')+' \u00b7 '+(p.modalita||'');left.appendChild(d3);
+        if(p.stato!=='CANCELLATO'){
+          var btnC=document.createElement('button');
+          btnC.textContent='Cancella';
+          btnC.style.cssText='margin-top:0.4rem;font-size:0.7rem;padding:0.25rem 0.65rem;background:none;border:1.5px solid #e8bdb9;border-radius:5px;color:var(--rosso);cursor:pointer;font-family:Raleway,sans-serif;font-weight:600;';
+          (function(eid,nome){btnC.onclick=function(){if(!confirm('Cancellare la prenotazione di '+nome+'?'))return;fetch(SCRIPT_URL+'?action=cancellaPrenotazione&eventId='+encodeURIComponent(eid)).then(function(r){return r.json();}).then(function(d){if(d.ok)caricaPrenotazioniMediatore();else alert(d.error||'Errore.');});};})(p.eventId,p.richiedente);
+          left.appendChild(btnC);
+        }
+        div.appendChild(left);
+        var badge=document.createElement('span');
+        badge.style.cssText='font-size:0.72rem;font-weight:600;padding:0.25rem 0.6rem;border-radius:20px;white-space:nowrap;background:'+sb+';color:'+sc+';';
+        badge.textContent=st;div.appendChild(badge);lista.appendChild(div);
+      });
+    })
+    .catch(function(){lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--rosso);">Errore nel caricamento.</div>';});
+}
+
+// ============================================================
+// PRENOTA PER PARTE (mediatore)
+// ============================================================
+var medSelectedSlot=null;
+function showMedPrenotaStep(step){['slot','form','success'].forEach(function(s){document.getElementById('med-prenota-step-'+s).style.display=step===s?'block':'none';});}
+function caricaSlotsPerMediatore(){
+  if(window._medPrenotaSlotsLoaded)return;
+  window._medPrenotaSlotsLoaded=true;
+  document.getElementById('med-prenota-loading').style.display='block';
+  document.getElementById('med-prenota-slots-wrapper').style.display='none';
+  showMedPrenotaStep('slot');
+  fetch(SCRIPT_URL+'?action=getSlots&mediatore='+encodeURIComponent(currentUser.username))
+    .then(function(r){return r.json();})
+    .then(function(data){
+      document.getElementById('med-prenota-loading').style.display='none';
+      if(!data.ok){document.getElementById('med-prenota-loading').innerHTML='<p style="color:var(--rosso);font-size:0.85rem;">Errore: '+(data.error||'impossibile caricare.')+'</p>';document.getElementById('med-prenota-loading').style.display='block';return;}
+      renderMedSlots(data.slots||[]);
+      document.getElementById('med-prenota-slots-wrapper').style.display='block';
+    })
+    .catch(function(){document.getElementById('med-prenota-loading').innerHTML='<p style="color:var(--rosso);font-size:0.85rem;">Errore di connessione.</p>';document.getElementById('med-prenota-loading').style.display='block';});
+}
+function renderMedSlots(slots){
+  var container=document.getElementById('med-prenota-slots-container');
+  if(!slots||slots.length===0){container.innerHTML='<p style="text-align:center;color:var(--grigio);font-size:0.88rem;padding:2rem 0;">Nessuno slot disponibile.</p>';return;}
+  var mesi=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var groups={};
+  slots.forEach(function(slot){var d=new Date(slot.start);var key=mesi[d.getMonth()]+' '+d.getFullYear();if(!groups[key])groups[key]=[];groups[key].push(slot);});
+  container.innerHTML='';
+  Object.keys(groups).forEach(function(month){
+    var mg=document.createElement('div');mg.className='month-group';mg.innerHTML='<div class="month-label">'+month+'</div>';
+    groups[month].forEach(function(slot){
+      var parts=slot.display.split(' \u2014 ');
+      var el=document.createElement('div');el.className='slot-item';
+      el.innerHTML='<div><div class="slot-day">'+(parts[0]||slot.display)+'</div><div class="slot-time">'+(parts[1]||'')+'</div></div><div class="slot-arrow">\u2192</div>';
+      el.onclick=function(){document.querySelectorAll('#med-prenota-slots-container .slot-item').forEach(function(s){s.classList.remove('selected');});el.classList.add('selected');medSelectedSlot=slot;document.getElementById('med-prenota-selected-display').textContent=slot.display;setTimeout(function(){showMedPrenotaStep('form');},250);};
+      mg.appendChild(el);
+    });
+    container.appendChild(mg);
+  });
+}
+function medConfirmBooking(){
+  var btn=document.getElementById('med-prenota-confirm-btn'),status=document.getElementById('med-prenota-status');
+  var nome=document.getElementById('med-prenota-nome').value.trim(),email=document.getElementById('med-prenota-email').value.trim();
+  var rg=document.getElementById('med-prenota-rg').value.trim().toUpperCase(),parte=document.getElementById('med-prenota-parte').value.trim();
+  var modalita=document.querySelector('input[name="med-prenota-modalita"]:checked').value;
+  status.style.display='none';
+  if(!medSelectedSlot){showMsg(status,'\u26a0 Nessuna data selezionata.','error');return;}
+  if(!nome){showMsg(status,'\u26a0 Inserisci il nome.','error');return;}
+  if(!email||!email.includes('@')){showMsg(status,'\u26a0 Email non valida.','error');return;}
+  if(!rg&&!parte){showMsg(status,'\u26a0 Inserisci R.G. o nome parte.','error');return;}
+  btn.disabled=true;btn.textContent='Creazione...';
+  var url=SCRIPT_URL+'?action=bookAdmin&username='+encodeURIComponent(currentUser.username)+'&mediatore='+encodeURIComponent(currentUser.username)+'&start='+encodeURIComponent(medSelectedSlot.start)+'&end='+encodeURIComponent(medSelectedSlot.end)+'&nome='+encodeURIComponent(nome)+'&email='+encodeURIComponent(email)+'&parteIstante='+encodeURIComponent(parte||rg)+'&modalita='+encodeURIComponent(modalita)+'&rg='+encodeURIComponent(rg);
+  fetch(url).then(function(r){return r.json();}).then(function(data){
+    btn.disabled=false;btn.textContent='\u2713 Conferma e invia email';
+    if(data.ok){document.getElementById('med-prenota-success-detail').innerHTML=(data.dataFormattata||medSelectedSlot.display)+'<br>'+nome+'<br>'+email+(rg?'<br>R.G.: '+rg:(parte?'<br>'+parte:''))+'<br>'+(modalita==='telematica'?'Telematica':'In presenza')+(data.meetLink?'<br><a href="'+data.meetLink+'" target="_blank" style="color:var(--verde);">Google Meet</a>':'');showMedPrenotaStep('success');window._medPrenotaSlotsLoaded=false;}
+    else showMsg(status,'\u26a0 '+(data.error||'Errore.'),'error');
+  }).catch(function(){btn.disabled=false;btn.textContent='\u2713 Conferma e invia email';showMsg(status,'\u26a0 Errore di rete.','error');});
+}
+
+// ============================================================
+// I MIEI UTENTI (mediatore)
+// ============================================================
+function caricaMieiUtenti(){
+  var tbody=document.getElementById('med-utenti-tbody');
+  tbody.innerHTML='<tr><td colspan="3" style="text-align:center;padding:1rem;color:var(--grigio);font-size:0.82rem;">Caricamento...</td></tr>';
+  fetch(SCRIPT_URL+'?action=getUsers')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      tbody.innerHTML='';
+      if(!data.ok){tbody.innerHTML='<tr><td colspan="3" style="text-align:center;color:var(--rosso);padding:1rem;font-size:0.82rem;">'+(data.error||'Errore')+'</td></tr>';return;}
+      var miei=(data.users||[]).filter(function(u){return u.creatoDa&&u.creatoDa.toLowerCase()===currentUser.username.toLowerCase();});
+      if(miei.length===0){tbody.innerHTML='<tr><td colspan="3" style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.82rem;">Nessun utente creato ancora.</td></tr>';return;}
+      miei.forEach(function(u){
+        var tr=document.createElement('tr');tr.style.borderBottom='1px solid var(--bordo)';
+        var td1=document.createElement('td');td1.style.padding='0.5rem 0.3rem';td1.innerHTML='<strong>'+u.username+'</strong>';
+        var td2=document.createElement('td');td2.style.padding='0.5rem 0.3rem';
+        td2.innerHTML=u.hasPassword?'<span style="color:var(--verde);font-size:0.75rem;">\u2713 Impostata</span>':'<span style="color:var(--arancio);font-size:0.75rem;">\u23f3 Primo accesso</span>';
+        var td3=document.createElement('td');td3.style.padding='0.5rem 0.3rem';
+        if(u.hasPassword){var btnR=document.createElement('button');btnR.textContent='Reset pwd';btnR.style.cssText='font-size:0.72rem;padding:0.2rem 0.6rem;background:none;border:1.5px solid #d4a017;border-radius:5px;color:#a07800;cursor:pointer;margin-right:0.3rem;font-family:Raleway,sans-serif;';(function(n){btnR.onclick=function(){medResetUser(n);};})(u.username);td3.appendChild(btnR);}
+        var btnD=document.createElement('button');btnD.textContent='Elimina';btnD.style.cssText='font-size:0.72rem;padding:0.2rem 0.6rem;background:none;border:1.5px solid #e8bdb9;border-radius:5px;color:var(--rosso);cursor:pointer;font-family:Raleway,sans-serif;';(function(n){btnD.onclick=function(){medDeleteUser(n);};})(u.username);td3.appendChild(btnD);
+        tr.appendChild(td1);tr.appendChild(td2);tr.appendChild(td3);tbody.appendChild(tr);
+      });
+    })
+    .catch(function(){tbody.innerHTML='<tr><td colspan="3" style="text-align:center;color:var(--rosso);font-size:0.82rem;padding:1rem;">Errore nel caricamento.</td></tr>';});
+}
+async function medAddUser(){
+  var username=document.getElementById('med-new-username').value.trim();
+  var msg=document.getElementById('med-add-user-msg');
+  if(!username){showMsg(msg,'\u26a0 Inserisci uno username.','error');return;}
+  try{var resp=await fetch(SCRIPT_URL+'?action=addUser&username='+encodeURIComponent(username)+'&role=user&creatoDa='+encodeURIComponent(currentUser.username));var data=await resp.json();if(data.ok){showMsg(msg,'\u2713 Utente "'+username+'" aggiunto.','success');document.getElementById('med-new-username').value='';caricaMieiUtenti();}else showMsg(msg,'\u26a0 '+(data.error||'Errore.'),'error');}catch(e){showMsg(msg,'\u26a0 Errore.','error');}
+}
+function medDeleteUser(username){if(!confirm('Eliminare "'+username+'"?'))return;fetch(SCRIPT_URL+'?action=deleteUser&username='+encodeURIComponent(username)).then(function(r){return r.json();}).then(function(){caricaMieiUtenti();});}
+function medResetUser(username){if(!confirm('Azzerare la password di "'+username+'"?'))return;fetch(SCRIPT_URL+'?action=resetUser&username='+encodeURIComponent(username)).then(function(r){return r.json();}).then(function(){caricaMieiUtenti();});}
+
+// ============================================================
+// LE MIE SEDI (responsabile sede)
+// ============================================================
+function caricaMieSedi(){
+  var lista=document.getElementById('med-sedi-lista');
+  lista.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>';
+  fetch(SCRIPT_URL+'?action=getMieSedi&username='+encodeURIComponent(currentUser.username))
+    .then(function(r){return r.json();})
+    .then(function(data){
+      lista.innerHTML='';
+      if(!data.ok||!data.sedi||data.sedi.length===0){var el=document.createElement('div');el.style.cssText='text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;';el.textContent='Non sei responsabile di nessuna sede.';lista.appendChild(el);return;}
+      var gl=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+      data.sedi.forEach(function(sede){
+        var card=document.createElement('div');card.style.cssText='border:1px solid var(--bordo);border-radius:9px;padding:1.2rem;margin-bottom:1rem;';
+        var gt=sede.giorniSede&&sede.giorniSede.length>0?sede.giorniSede.map(function(g){return gl[g]||g;}).join(', '):'Non configurato';
+        var ot=sede.orariSede&&sede.orariSede.length>0?sede.orariSede.map(function(h){return h+':00';}).join(' \u00b7 '):'Non configurato';
+        var gv=(sede.giorniSede||[]).join(','),ov=(sede.orariSede||[]).join(',');
+        card.innerHTML='<div style="font-weight:600;color:var(--blu);font-size:0.95rem;margin-bottom:0.8rem;">&#128205; '+(sede.nome||sede.citta)+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:1rem;"><div style="font-size:0.82rem;"><span style="color:var(--grigio);display:block;margin-bottom:0.15rem;">Giorni apertura</span><strong>'+gt+'</strong></div><div style="font-size:0.82rem;"><span style="color:var(--grigio);display:block;margin-bottom:0.15rem;">Orari slot</span><strong>'+ot+'</strong></div></div><div style="background:var(--cielo);border-radius:7px;padding:0.9rem;border:1px solid var(--bordo);"><p style="font-size:0.72rem;color:var(--azzurro);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.7rem;">Modifica disponibilita</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.7rem;"><div class="input-group" style="margin-bottom:0;"><label style="font-size:0.72rem;">Giorni (1=Lun)</label><input type="text" id="sed-giorni-'+sede.id+'" value="'+gv+'" placeholder="Es. 1,4" /></div><div class="input-group" style="margin-bottom:0;"><label style="font-size:0.72rem;">Orari slot</label><input type="text" id="sed-orari-'+sede.id+'" value="'+ov+'" placeholder="Es. 9,11" /></div></div><button onclick="salvaSede('+sede.id+')" style="font-size:0.78rem;padding:0.45rem 1rem;background:var(--azzurro);color:white;border:none;border-radius:6px;cursor:pointer;font-family:Raleway,sans-serif;font-weight:600;">Salva</button><span id="sed-msg-'+sede.id+'" style="font-size:0.78rem;margin-left:0.8rem;display:none;"></span></div>';
+        lista.appendChild(card);
+      });
+    })
+    .catch(function(){lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.85rem;">Errore nel caricamento.</div>';});
+}
+async function salvaSede(sedeId){
+  var giorni=document.getElementById('sed-giorni-'+sedeId).value.trim();
+  var orari=document.getElementById('sed-orari-'+sedeId).value.trim();
+  var msg=document.getElementById('sed-msg-'+sedeId);
+  try{var resp=await fetch(SCRIPT_URL+'?action=salvaSedDisponibilita&sedeId='+encodeURIComponent(sedeId)+'&responsabile='+encodeURIComponent(currentUser.username)+'&giorni='+encodeURIComponent(giorni)+'&orari='+encodeURIComponent(orari));var data=await resp.json();msg.style.display='inline';if(data.ok){msg.style.color='var(--verde)';msg.textContent='\u2713 Salvato!';setTimeout(caricaMieSedi,1000);}else{msg.style.color='var(--rosso)';msg.textContent='\u26a0 '+(data.error||'Errore.');}}catch(e){msg.style.display='inline';msg.style.color='var(--rosso)';msg.textContent='\u26a0 Errore.';}
+}
+
+// ============================================================
+// LA MIA CONFIGURAZIONE (mediatore)
+// ============================================================
+function caricaMiaConfig(){
+  document.getElementById('med-cfg-loading').style.display='block';
+  document.getElementById('med-cfg-loading').textContent='Caricamento...';
+  document.getElementById('med-cfg-form').style.display='none';
+  fetch(SCRIPT_URL+'?action=getMediatorConfig&username='+encodeURIComponent(currentUser.username))
+    .then(function(r){return r.json();})
+    .then(function(data){
+      document.getElementById('med-cfg-loading').style.display='none';
+      var d=data.ok?data:{};
+      document.getElementById('med-cfg-nome').value=d.nome||currentUser.username;
+      document.getElementById('med-cfg-email').value=d.emailAvvisi||(currentUser.emailAccount||'');
+      document.getElementById('med-cfg-sedi').value=(d.sediPresenza||[]).join(',');
+      document.getElementById('med-cfg-giorni').value=(d.giorni||[1,2,3,4]).join(',');
+      document.getElementById('med-cfg-orari').value=(d.orari||[9,11,15,17]).join(',');
+      document.getElementById('med-cfg-daysmin').value=d.daysMin||22;
+      document.getElementById('med-cfg-daysmax').value=d.daysMax||40;
+      document.getElementById('med-cfg-online').checked=!!d.online;
+      document.getElementById('med-cfg-form').style.display='block';
+      if(!data.ok){var m=document.getElementById('med-cfg-msg');m.style.display='block';m.style.background='#fef9e7';m.style.color='#7d6608';m.textContent='Configurazione non ancora salvata.';}
+    })
+    .catch(function(){document.getElementById('med-cfg-loading').textContent='Errore. Riprova.';document.getElementById('med-cfg-loading').style.display='block';});
+}
+async function salvaMiaConfig(){
+  var msg=document.getElementById('med-cfg-msg'),btn=document.querySelector('#med-tab-config .btn-add');
+  btn.disabled=true;btn.textContent='Salvataggio...';
+  try{var url=SCRIPT_URL+'?action=salvaMediatorConfig&username='+encodeURIComponent(currentUser.username)+'&sediPresenza='+encodeURIComponent(document.getElementById('med-cfg-sedi').value.trim())+'&online='+encodeURIComponent(document.getElementById('med-cfg-online').checked?'SI':'NO')+'&giorni='+encodeURIComponent(document.getElementById('med-cfg-giorni').value.trim())+'&orari='+encodeURIComponent(document.getElementById('med-cfg-orari').value.trim())+'&daysMin='+encodeURIComponent(document.getElementById('med-cfg-daysmin').value)+'&daysMax='+encodeURIComponent(document.getElementById('med-cfg-daysmax').value)+'&emailAvvisi='+encodeURIComponent(document.getElementById('med-cfg-email').value.trim());var resp=await fetch(url);var data=await resp.json();showMsg(msg,data.ok?'\u2713 Salvata.':'\u26a0 '+(data.error||'Errore.'),data.ok?'success':'error');}catch(e){showMsg(msg,'\u26a0 Errore.','error');}
+  finally{btn.disabled=false;btn.textContent='Salva configurazione';}
+}
+async function changeMedPassword(){
+  var p1=document.getElementById('med-new-pwd-1').value,p2=document.getElementById('med-new-pwd-2').value;
+  var msg=document.getElementById('med-change-pwd-msg');
+  if(p1.length<6){showMsg(msg,'\u26a0 Minimo 6 caratteri.','error');return;}
+  if(p1!==p2){showMsg(msg,'\u26a0 Le password non coincidono.','error');return;}
+  var hash=await hashPassword(p1);
+  try{var resp=await fetch(SCRIPT_URL+'?action=setPassword&username='+encodeURIComponent(currentUser.username)+'&hash='+encodeURIComponent(hash));var data=await resp.json();if(data.ok){currentUser.hash=hash;setSession(currentUser,!!localStorage.getItem('mediazione_session_remember'));showMsg(msg,'\u2713 Aggiornata.','success');document.getElementById('med-new-pwd-1').value='';document.getElementById('med-new-pwd-2').value='';}else showMsg(msg,'\u26a0 Errore.','error');}catch(e){showMsg(msg,'\u26a0 Errore.','error');}
+}
+
+// ============================================================
+// PANNELLO MEDIATORI (admin)
+// ============================================================
+var _gN=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+function caricaMediatori(){
+  var lista=document.getElementById('mediatori-lista');
+  if(!lista)return;
+  lista.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>';
+  fetch(SCRIPT_URL+'?action=getMediatori&tipo=')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(!data.ok||!data.mediatori||data.mediatori.length===0){lista.innerHTML='<div style="color:var(--grigio);font-size:0.85rem;">Nessun mediatore configurato.</div>';return;}
+      lista.innerHTML='';
+      Promise.all(data.mediatori.map(function(m){return fetch(SCRIPT_URL+'?action=getMediatorConfig&username='+encodeURIComponent(m.username)).then(function(r){return r.json();});}))
+        .then(function(configs){
+          configs.forEach(function(cfg){
+            if(!cfg.ok)return;
+            var card=document.createElement('div');card.style.cssText='border:1px solid var(--bordo);border-radius:9px;padding:1rem 1.2rem;margin-bottom:0.8rem;';
+            var giorni=(cfg.giorni||[]).map(function(g){return _gN[g]||g;}).join(', ');
+            var orari=(cfg.orari||[]).map(function(h){return h+':00';}).join(' \u00b7 ');
+            var sedi=(cfg.sediPresenza||[]).join(', ')||'\u2014';
+            var online=cfg.online?'<span style="color:var(--verde);font-size:0.75rem;font-weight:600;">\u2713 Online</span>':'<span style="color:var(--grigio);font-size:0.75rem;">\u2717 Solo presenza</span>';
+            var cfgEnc=encodeURIComponent(JSON.stringify(cfg));
+            card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;"><div><div style="font-weight:600;color:var(--blu);font-size:0.92rem;">'+(cfg.nome||cfg.username)+'</div><div style="font-size:0.75rem;color:var(--grigio);margin-top:0.15rem;">@'+cfg.username+' \u00b7 '+(cfg.emailAvvisi||'')+'</div></div><div>'+online+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.6rem;margin-top:0.8rem;"><div style="font-size:0.78rem;"><span style="color:var(--grigio);display:block;margin-bottom:0.1rem;">Sedi</span><strong>'+sedi+'</strong></div><div style="font-size:0.78rem;"><span style="color:var(--grigio);display:block;margin-bottom:0.1rem;">Giorni</span><strong>'+giorni+'</strong></div><div style="font-size:0.78rem;"><span style="color:var(--grigio);display:block;margin-bottom:0.1rem;">Orari</span><strong>'+orari+'</strong></div></div><div style="margin-top:0.8rem;"><button data-cfg="'+cfgEnc+'" onclick="editMediatore(this)" style="font-size:0.75rem;padding:0.3rem 0.8rem;background:none;border:1.5px solid var(--azzurro);border-radius:5px;color:var(--azzurro);cursor:pointer;font-family:Raleway,sans-serif;font-weight:600;">Modifica</button></div>';
+            lista.appendChild(card);
+          });
+        });
+    })
+    .catch(function(){lista.innerHTML='<div style="color:var(--rosso);font-size:0.85rem;">Errore.</div>';});
+}
+function editMediatore(btn){
+  var cfg=JSON.parse(decodeURIComponent(btn.getAttribute('data-cfg')));
+  document.getElementById('mediatori-form-title').textContent='Modifica: '+(cfg.nome||cfg.username);
+  document.getElementById('med-username').value=cfg.username||'';document.getElementById('med-username').readOnly=true;
+  document.getElementById('med-nome').value=cfg.nome||'';document.getElementById('med-email').value=cfg.emailAvvisi||'';
+  document.getElementById('med-sedi').value=(cfg.sediPresenza||[]).join(',');
+  document.getElementById('med-giorni').value=(cfg.giorni||[]).join(',');document.getElementById('med-orari').value=(cfg.orari||[]).join(',');
+  document.getElementById('med-daysmin').value=cfg.daysMin||22;document.getElementById('med-daysmax').value=cfg.daysMax||40;
+  document.getElementById('med-online').checked=!!cfg.online;
+  document.getElementById('med-cancel-btn').style.display='inline-block';document.getElementById('med-msg').style.display='none';
+}
+function annullaEditMediatore(){
+  document.getElementById('mediatori-form-title').textContent='+ Aggiungi mediatore';
+  ['med-username','med-nome','med-email','med-sedi'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('med-username').readOnly=false;
+  document.getElementById('med-giorni').value='1,2,3,4';document.getElementById('med-orari').value='9,11,15,17';
+  document.getElementById('med-daysmin').value=22;document.getElementById('med-daysmax').value=40;
+  document.getElementById('med-online').checked=false;document.getElementById('med-cancel-btn').style.display='none';document.getElementById('med-msg').style.display='none';
+}
+async function salvaMediatore(){
+  var username=document.getElementById('med-username').value.trim(),nome=document.getElementById('med-nome').value.trim(),email=document.getElementById('med-email').value.trim();
+  var msg=document.getElementById('med-msg'),btn=document.getElementById('med-save-btn');
+  if(!username){showMsg(msg,'\u26a0 Username obbligatorio.','error');return;}
+  if(!nome){showMsg(msg,'\u26a0 Nome obbligatorio.','error');return;}
+  if(!email||!email.includes('@')){showMsg(msg,'\u26a0 Email non valida.','error');return;}
+  btn.disabled=true;btn.textContent='Salvataggio...';
+  try{var url=SCRIPT_URL+'?action=salvaMediatorConfig&username='+encodeURIComponent(username)+'&sediPresenza='+encodeURIComponent(document.getElementById('med-sedi').value.trim())+'&online='+encodeURIComponent(document.getElementById('med-online').checked?'SI':'NO')+'&giorni='+encodeURIComponent(document.getElementById('med-giorni').value.trim())+'&orari='+encodeURIComponent(document.getElementById('med-orari').value.trim())+'&daysMin='+encodeURIComponent(document.getElementById('med-daysmin').value)+'&daysMax='+encodeURIComponent(document.getElementById('med-daysmax').value)+'&emailAvvisi='+encodeURIComponent(email);var resp=await fetch(url);var data=await resp.json();if(data.ok){showMsg(msg,'\u2713 Salvato.','success');annullaEditMediatore();setTimeout(caricaMediatori,800);}else showMsg(msg,'\u26a0 '+(data.error||'Errore.'),'error');}catch(e){showMsg(msg,'\u26a0 Errore.','error');}
+  finally{btn.disabled=false;btn.textContent='Salva mediatore';}
+}
+
+// ============================================================
+// ADMIN PRENOTA — selezione mediatore e sede
+// ============================================================
+function inizializzaAdminPrenota(){
+  fetch(SCRIPT_URL+'?action=getMediatori&tipo=')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var sel=document.getElementById('admin-sel-mediatore');if(!sel)return;
+      sel.innerHTML='<option value="">-- Seleziona mediatore --</option>';
+      if(data.ok&&data.mediatori)data.mediatori.forEach(function(m){var opt=document.createElement('option');opt.value=m.username;opt.textContent=m.nome;sel.appendChild(opt);});
+    });
+}
+function onAdminMediatoreChange(){
+  var username=document.getElementById('admin-sel-mediatore').value;
+  var sedeSel=document.getElementById('admin-sel-sede');
+  sedeSel.innerHTML='<option value="">Caricamento...</option>';
+  if(!username){sedeSel.innerHTML='<option value="">-- seleziona mediatore --</option>';return;}
+  fetch(SCRIPT_URL+'?action=getMediatorConfig&username='+encodeURIComponent(username))
+    .then(function(r){return r.json();})
+    .then(function(data){
+      sedeSel.innerHTML='';
+      if(data.ok&&data.sediPresenza&&data.sediPresenza.length>0)data.sediPresenza.forEach(function(s){var opt=document.createElement('option');opt.value=s;opt.textContent=s;sedeSel.appendChild(opt);});
+      if(data.ok&&data.online){var opt=document.createElement('option');opt.value='Telematica';opt.textContent='Telematica (da remoto)';sedeSel.appendChild(opt);}
+      if(sedeSel.options.length===0)sedeSel.innerHTML='<option value="">Nessuna sede</option>';
+    });
+}
+function aggiornaSlotAdmin(){
+  var mediatore=document.getElementById('admin-sel-mediatore').value;
+  var sede=document.getElementById('admin-sel-sede').value;
+  if(!mediatore){alert('Seleziona un mediatore.');return;}
+  var lbox=document.getElementById('admin-loading-box'),wrap=document.getElementById('admin-slots-wrapper');
+  lbox.innerHTML='<div class="spinner"></div><p style="font-size:0.85rem;color:var(--grigio);margin-top:0.8rem;">Controllo disponibilita...</p>';
+  lbox.style.display='block';wrap.style.display='none';showAdminStep('slot');
+  fetch(SCRIPT_URL+'?action=getSlots&mediatore='+encodeURIComponent(mediatore)+'&sede='+encodeURIComponent(sede))
+    .then(function(r){return r.json();})
+    .then(function(data){lbox.style.display='none';if(!data.ok){lbox.innerHTML='<p style="color:var(--rosso);font-size:0.85rem;">Errore: '+(data.error||'impossibile caricare.')+'</p>';lbox.style.display='block';return;}renderAdminSlots(data.slots||[]);wrap.style.display='block';})
+    .catch(function(){lbox.innerHTML='<p style="color:var(--rosso);font-size:0.85rem;">Errore di connessione.</p>';lbox.style.display='block';});
+}
+
+// ============================================================
+// showAdminTab aggiornato + impostazioni email
+// ============================================================
+function showAdminTab(tab) {
+  var tabs = ['users','pwd','prenota','config','vedi','mediatori'];
+  tabs.forEach(function(t) {
+    var el = document.getElementById('admin-tab-' + t);
+    if (el) el.style.display = tab === t ? 'block' : 'none';
+  });
+  if (tab === 'prenota') { inizializzaAdminPrenota(); showAdminStep('slot'); }
+  if (tab === 'config' && !window._configLoaded) { window._configLoaded = true; loadConfig(); }
+  if (tab === 'vedi') { caricaTuttePrenotazioni(); }
+  if (tab === 'mediatori') { caricaMediatori(); }
+}
+function mostraImpostaEmail() { var m=document.getElementById('impostazioni-modal'); if(m){m.style.display='flex'; var el=document.getElementById('impostazioni-email'); if(el&&currentUser&&currentUser.emailAccount) el.value=currentUser.emailAccount;} }
+function chiudiImpostazioniEmail() { var m=document.getElementById('impostazioni-modal'); if(m) m.style.display='none'; }
+async function salvaImpostazioniEmail(){
+  var email=document.getElementById('impostazioni-email').value.trim();
+  var msg=document.getElementById('impostazioni-msg');
+  if(!email||!email.includes('@')){showMsg(msg,'\u26a0 Email non valida.','error');return;}
+  try{var resp=await fetch(SCRIPT_URL+'?action=setEmailAccount&username='+encodeURIComponent(currentUser.username)+'&email='+encodeURIComponent(email));var data=await resp.json();if(data.ok){currentUser.emailAccount=email;setSession(currentUser,!!localStorage.getItem('mediazione_session_remember'));showMsg(msg,'\u2713 Salvata.','success');setTimeout(chiudiImpostazioniEmail,1000);var banner=document.getElementById('email-missing-alert');if(banner)banner.style.display='none';}else showMsg(msg,'\u26a0 '+(data.error||'Errore.'),'error');}catch(e){showMsg(msg,'\u26a0 Errore.','error');}
+}
+// ============================================================
+// AVVIO
+// ============================================================
+window.onload = async function() {
+  // Controlla se c'e' gia una sessione attiva
+  const session = getSession();
+  if (session) {
+    currentUser = session;
+    if (session.role === 'admin') {
+      showAdmin();
+    } else if (session.role === 'mediatore') {
+      showMediatore();
+    } else {
+      goToApp();
+    }
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+
+  // Permetti login con INVIO
+  document.getElementById('login-password').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('login-username').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('login-password').focus();
+  });
+};
+</script>
+
+<!-- ===== MODALE IMPOSTAZIONI EMAIL ===== -->
+<div id="impostazioni-modal" style="display:none; position:fixed; inset:0; background:rgba(26,74,122,0.5); z-index:9999; align-items:center; justify-content:center; padding:1.5rem;">
+  <div style="background:white; border-radius:14px; padding:2rem; width:100%; max-width:400px; box-shadow:0 20px 50px rgba(0,0,0,0.25); animation:fadeUp 0.3s ease;">
+    <h3 style="font-family:Lora,serif; font-size:1.2rem; font-weight:400; color:var(--blu); margin-bottom:0.5rem;">Impostazioni account</h3>
+    <p style="font-size:0.82rem; color:var(--grigio); line-height:1.65; margin-bottom:1.5rem;">
+      La tua email di account riceve in copia <strong>tutte</strong> le comunicazioni — anche quando nel form di prenotazione indichi un'altra email.
+    </p>
+    <div class="login-input-group">
+      <label>Email account</label>
+      <input type="email" id="impostazioni-email" placeholder="studio@esempio.it" />
+    </div>
+    <div style="display:flex; gap:0.8rem; margin-top:0.8rem;">
+      <button onclick="salvaImpostazioniEmail()" style="flex:1; padding:0.8rem; background:linear-gradient(135deg,var(--blu),var(--azzurro)); color:white; border:none; border-radius:7px; font-family:Raleway,sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer;">Salva</button>
+      <button onclick="chiudiImpostazioniEmail()" style="padding:0.8rem 1.2rem; background:none; border:1.5px solid var(--bordo); border-radius:7px; font-family:Raleway,sans-serif; font-size:0.82rem; color:var(--grigio); cursor:pointer;">Annulla</button>
+    </div>
+    <div id="impostazioni-msg" style="margin-top:0.8rem; font-size:0.8rem; padding:0.6rem 0.9rem; border-radius:6px; display:none;"></div>
+  </div>
+</div>
+
+
+<!-- ===== PANNELLO MEDIATORE ===== -->
+<div id="mediatore-screen" style="display:none; min-height:100vh; background:var(--bianco);">
+  <div class="top-bar">
+    <span>Connesso come: <strong id="med-topbar-username"></strong>
+      <span class="badge badge-mediatore" style="margin-left:0.5rem;">Mediatore</span>
+    </span>
+    <button id="med-btn-back-admin" class="btn-topbar" onclick="tornaAdmin()" style="display:none;">&#8592; Admin</button>
+    <button class="btn-topbar" onclick="doLogout()">Esci</button>
+  </div>
+  <div style="background:var(--blu); padding:0 1.5rem; display:flex; gap:0.5rem; overflow-x:auto;">
+    <button class="btn-admin-nav" id="med-tab-btn-prenotazioni" onclick="showMedTab('prenotazioni')">&#128203; Le mie prenotazioni</button>
+    <button class="btn-admin-nav" id="med-tab-btn-prenota" onclick="showMedTab('prenota')">&#128197; Prenota per parte</button>
+    <button class="btn-admin-nav" id="med-tab-btn-utenti" onclick="showMedTab('utenti')">&#128101; I miei utenti</button>
+    <button class="btn-admin-nav" id="med-tab-btn-sedi" onclick="showMedTab('sedi')">&#128205; Le mie sedi</button>
+    <button class="btn-admin-nav" id="med-tab-btn-config" onclick="showMedTab('config')">&#9881; La mia configurazione</button>
+    <button class="btn-admin-nav" id="med-tab-btn-pwd" onclick="showMedTab('pwd')">&#128273; Password</button>
+  </div>
+  <div style="max-width:860px; margin:0 auto; padding:2rem 1.5rem;">
+
+    <!-- Tab prenotazioni -->
+    <div id="med-tab-prenotazioni">
+      <div class="admin-card">
+        <h3>&#128203; Le mie prenotazioni</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.8rem; margin-bottom:1.2rem; align-items:end;">
+          <div class="input-group" style="margin-bottom:0;"><label>Cerca</label><input type="text" id="med-vedi-filtro" placeholder="Nome, email, R.G." oninput="caricaPrenotazioniMediatore()" /></div>
+          <div class="input-group" style="margin-bottom:0;"><label>Stato</label>
+            <select id="med-vedi-stato" onchange="caricaPrenotazioniMediatore()">
+              <option value="">Tutti</option><option value="IN ATTESA">In attesa</option>
+              <option value="CONFERMATO">Confermati</option><option value="CANCELLATO">Cancellati</option>
+            </select>
+          </div>
+          <button class="btn-add" onclick="caricaPrenotazioniMediatore()" style="padding:0.75rem 1rem;">Aggiorna</button>
+        </div>
+        <div id="med-vedi-count" style="font-size:0.78rem; color:var(--grigio); margin-bottom:0.8rem;"></div>
+        <div id="med-vedi-lista"><div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Clicca Aggiorna per caricare.</div></div>
+      </div>
+    </div>
+
+    <!-- Tab prenota per parte -->
+    <div id="med-tab-prenota" style="display:none">
+      <div id="med-prenota-step-slot">
+        <div class="admin-card">
+          <h3>&#128197; Prenota per la parte</h3>
+          <div id="med-prenota-loading" style="text-align:center;padding:2rem;"><div class="spinner"></div><p style="font-size:0.85rem;color:var(--grigio);margin-top:0.8rem;">Controllo disponibilita...</p></div>
+          <div id="med-prenota-slots-wrapper" style="display:none"><div id="med-prenota-slots-container"></div></div>
+        </div>
+      </div>
+      <div id="med-prenota-step-form" style="display:none">
+        <div class="admin-card">
+          <h3>&#128203; Dati della parte</h3>
+          <p style="font-size:0.82rem;color:var(--grigio);margin-bottom:0.5rem;">Slot: <strong id="med-prenota-selected-display" style="color:var(--blu)"></strong></p>
+          <button onclick="showMedPrenotaStep('slot')" style="margin-bottom:1.2rem;padding:0.4rem 0.9rem;background:none;border:1.5px solid var(--bordo);border-radius:5px;font-family:Raleway,sans-serif;font-size:0.78rem;color:var(--grigio);cursor:pointer;">&#8592; Cambia data</button>
+          <div class="input-group"><label>Nome e Cognome della parte</label><input type="text" id="med-prenota-nome" placeholder="Es. Mario Rossi" /></div>
+          <div class="input-group"><label>Email della parte</label><input type="email" id="med-prenota-email" placeholder="mario.rossi@email.it" /></div>
+          <div style="background:var(--cielo);border:1px solid var(--bordo);border-radius:8px;padding:1.1rem 1.3rem;margin-bottom:1.2rem;">
+            <p style="font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--azzurro);font-weight:600;margin-bottom:0.9rem;">Procedura</p>
+            <div class="input-group" style="margin-bottom:0.7rem;"><label>R.G.</label><input type="text" id="med-prenota-rg" placeholder="Es. 192/26" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase();" /></div>
+            <div style="text-align:center;color:var(--grigio);font-size:0.75rem;margin:0.5rem 0;">oppure</div>
+            <div class="input-group" style="margin-bottom:0;"><label>Nome parte istante</label><input type="text" id="med-prenota-parte" /></div>
+          </div>
+          <div class="input-group"><label>Modalita</label>
+            <div style="display:flex;gap:1.5rem;margin-top:0.5rem;">
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.9rem;font-weight:500;color:var(--testo);"><input type="radio" name="med-prenota-modalita" value="presenza" checked style="accent-color:var(--azzurro);width:16px;height:16px;"> In presenza</label>
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.9rem;font-weight:500;color:var(--testo);"><input type="radio" name="med-prenota-modalita" value="telematica" style="accent-color:var(--azzurro);width:16px;height:16px;"> Telematica <span style="font-size:0.75rem;color:var(--verde);font-weight:600;">+GMeet</span></label>
+            </div>
+          </div>
+          <button class="btn-add" id="med-prenota-confirm-btn" onclick="medConfirmBooking()" style="width:100%;padding:0.9rem;margin-top:0.5rem;">&#10003; Conferma e invia email</button>
+          <div id="med-prenota-status" style="margin-top:0.8rem;font-size:0.82rem;padding:0.7rem 1rem;border-radius:6px;display:none;"></div>
+        </div>
+      </div>
+      <div id="med-prenota-step-success" style="display:none">
+        <div class="admin-card" style="text-align:center;">
+          <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--azzurro),var(--celeste));display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h3 style="color:var(--blu);margin-bottom:0.5rem;">Confermato!</h3>
+          <div class="event-confirm" id="med-prenota-success-detail" style="margin:1rem auto;max-width:380px;"></div>
+          <button class="btn btn-primary" onclick="showMedPrenotaStep('slot');window._medPrenotaSlotsLoaded=false;caricaSlotsPerMediatore();" style="max-width:240px;margin:0 auto;">+ Nuova prenotazione</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab I miei utenti -->
+    <div id="med-tab-utenti" style="display:none">
+      <div class="admin-card">
+        <h3>&#128101; I miei utenti</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:0.83rem;margin-bottom:1.5rem;">
+          <thead><tr style="border-bottom:2px solid var(--bordo);color:var(--grigio);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;">
+            <th style="text-align:left;padding:0.5rem 0.3rem;">Username</th>
+            <th style="text-align:left;padding:0.5rem 0.3rem;">Password</th>
+            <th style="text-align:left;padding:0.5rem 0.3rem;">Azione</th>
+          </tr></thead>
+          <tbody id="med-utenti-tbody"></tbody>
+        </table>
+        <div style="border-top:1.5px solid var(--bordo);padding-top:1.2rem;">
+          <h4 style="font-size:0.88rem;font-weight:600;color:var(--blu);margin-bottom:1rem;">+ Aggiungi utente</h4>
+          <div class="input-group"><label>Username</label><input type="text" id="med-new-username" placeholder="Es. StudioRossi26" /></div>
+          <button class="btn-add" onclick="medAddUser()" style="max-width:180px;">Aggiungi</button>
+          <div id="med-add-user-msg" style="margin-top:0.8rem;font-size:0.82rem;padding:0.6rem 1rem;border-radius:6px;display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Le mie sedi -->
+    <div id="med-tab-sedi" style="display:none">
+      <div class="admin-card">
+        <h3>&#128205; Le mie sedi</h3>
+        <p style="font-size:0.82rem;color:var(--grigio);margin-bottom:1.2rem;line-height:1.6;">Giorni e orari di apertura delle sedi di cui sei responsabile. Gli slot finali sono intersezione tra la tua agenda e la disponibilita della sede.</p>
+        <div id="med-sedi-lista"><div style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div></div>
+      </div>
+    </div>
+
+    <!-- Tab La mia configurazione -->
+    <div id="med-tab-config" style="display:none">
+      <div class="admin-card">
+        <h3>&#9881; La mia configurazione</h3>
+        <div id="med-cfg-loading" style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>
+        <div id="med-cfg-form" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:1rem;">
+            <div class="input-group"><label>Nome completo</label><input type="text" id="med-cfg-nome" /></div>
+            <div class="input-group"><label>Email avvisi</label><input type="email" id="med-cfg-email" /></div>
+          </div>
+          <div class="input-group"><label>Sedi in presenza (virgola)</label><input type="text" id="med-cfg-sedi" placeholder="Es. Vicenza,Bassano del Grappa" /></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;">
+            <div class="input-group"><label>Giorni (1=Lun)</label><input type="text" id="med-cfg-giorni" /></div>
+            <div class="input-group"><label>Orari slot</label><input type="text" id="med-cfg-orari" /></div>
+            <div class="input-group"><label>Min giorni</label><input type="number" id="med-cfg-daysmin" /></div>
+            <div class="input-group"><label>Max giorni</label><input type="number" id="med-cfg-daysmax" /></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.88rem;text-transform:none;letter-spacing:0;font-weight:500;color:var(--testo);margin-bottom:1.2rem;">
+            <input type="checkbox" id="med-cfg-online" style="accent-color:var(--verde);width:16px;height:16px;" /> Disponibile per sedute telematiche
+          </label>
+          <button class="btn-add" onclick="salvaMiaConfig()" style="max-width:220px;">Salva configurazione</button>
+          <div id="med-cfg-msg" style="margin-top:0.8rem;font-size:0.82rem;padding:0.6rem 1rem;border-radius:6px;display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Password -->
+    <div id="med-tab-pwd" style="display:none">
+      <div class="admin-card">
+        <h3>&#128273; Cambia password</h3>
+        <div class="change-pwd-form">
+          <div class="input-group"><label>Nuova password</label><input type="password" id="med-new-pwd-1" placeholder="Minimo 6 caratteri" /></div>
+          <div class="input-group"><label>Conferma password</label><input type="password" id="med-new-pwd-2" /></div>
+        </div><br>
+        <button class="btn-add" onclick="changeMedPassword()" style="max-width:200px;">Salva password</button>
+        <div id="med-change-pwd-msg" style="margin-top:0.8rem;font-size:0.82rem;padding:0.6rem 1rem;border-radius:6px;display:none;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Tab Mediatori (admin) -->
+<script>
+// Inject admin tabs HTML
+document.addEventListener('DOMContentLoaded', function() {
+  var pwdTab = document.getElementById('admin-tab-pwd');
+  if (!pwdTab) return;
+  var medAdminTab = document.createElement('div');
+  medAdminTab.id = 'admin-tab-mediatori';
+  medAdminTab.style.display = 'none';
+  medAdminTab.innerHTML = '<div class="admin-card"><h3>&#9878; Mediatori</h3><div id="mediatori-lista" style="margin-bottom:1.5rem;"><div style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div></div><div style="border-top:1.5px solid var(--bordo);padding-top:1.2rem;"><h4 id="mediatori-form-title" style="font-size:0.88rem;font-weight:600;color:var(--blu);margin-bottom:1rem;">+ Aggiungi mediatore</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;"><div class="input-group" style="margin-bottom:0;"><label>Username</label><input type="text" id="med-username" placeholder="Es. rossi.m" /></div><div class="input-group" style="margin-bottom:0;"><label>Nome completo</label><input type="text" id="med-nome" /></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;"><div class="input-group" style="margin-bottom:0;"><label>Email avvisi</label><input type="email" id="med-email" /></div><div class="input-group" style="margin-bottom:0;"><label>Sedi (virgola)</label><input type="text" id="med-sedi" /></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;"><div class="input-group" style="margin-bottom:0;"><label>Giorni</label><input type="text" id="med-giorni" value="1,2,3,4" /></div><div class="input-group" style="margin-bottom:0;"><label>Orari</label><input type="text" id="med-orari" value="9,11,15,17" /></div><div class="input-group" style="margin-bottom:0;"><label>Min</label><input type="number" id="med-daysmin" value="22" /></div><div class="input-group" style="margin-bottom:0;"><label>Max</label><input type="number" id="med-daysmax" value="40" /></div></div><label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;text-transform:none;letter-spacing:0;font-weight:500;color:var(--testo);margin-bottom:1rem;"><input type="checkbox" id="med-online" style="accent-color:var(--verde);width:16px;height:16px;" /> Disponibile per sedute telematiche</label><div style="display:flex;gap:0.8rem;"><button class="btn-add" id="med-save-btn" onclick="salvaMediatore()" style="max-width:180px;">Salva mediatore</button><button id="med-cancel-btn" onclick="annullaEditMediatore()" style="display:none;padding:0.7rem 1.2rem;background:none;border:1.5px solid var(--bordo);border-radius:7px;font-family:Raleway,sans-serif;font-size:0.82rem;color:var(--grigio);cursor:pointer;">Annulla</button></div><div id="med-msg" style="margin-top:0.8rem;font-size:0.82rem;padding:0.6rem 1rem;border-radius:6px;display:none;"></div></div></div>';
+  pwdTab.parentNode.insertBefore(medAdminTab, pwdTab);
+
+  // Admin config tab (simplified)
+  var cfgTab = document.getElementById('admin-tab-config');
+  if (cfgTab) {
+    cfgTab.innerHTML = '<div class="admin-card"><h3>&#9881; Configurazione globale app</h3><p style="font-size:0.82rem;color:var(--grigio);margin-bottom:1.5rem;line-height:1.6;">Impostazioni generali. Le configurazioni di ogni mediatore si trovano nel tab &#9878; Mediatori.</p><div id="config-loading" style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div><div id="config-form" style="display:none;"><div style="margin-bottom:1.8rem;"><p style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--azzurro);font-weight:600;margin-bottom:1rem;border-bottom:2px solid var(--cielo);padding-bottom:0.5rem;">&#128187; Interfaccia app</p><div class="input-group"><label>Titolo header</label><input type="text" id="cfg-titolo-app" /></div><div class="input-group"><label>Sottotitolo header</label><input type="text" id="cfg-sottotitolo-app" /></div></div><div style="margin-bottom:1.8rem;"><p style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--azzurro);font-weight:600;margin-bottom:1rem;border-bottom:2px solid var(--cielo);padding-bottom:0.5rem;">&#128231; Email e Drive</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;"><div class="input-group"><label>Email CC globale</label><input type="email" id="cfg-email-cc" /></div><div class="input-group"><label>Cartella Google Drive</label><input type="text" id="cfg-drive-root" /></div></div></div><button class="btn-add" id="cfg-save-btn" onclick="saveConfig()" style="width:100%;padding:0.9rem;">Salva configurazione</button><div id="cfg-msg" style="margin-top:0.8rem;font-size:0.82rem;padding:0.7rem 1rem;border-radius:6px;display:none;"></div></div></div>';
+  }
+
+  // Admin prenota - add mediatore/sede selectors
+  var prenotaTab = document.getElementById('admin-tab-prenota');
+  if (prenotaTab) {
+    var selectorDiv = document.createElement('div');
+    selectorDiv.className = 'admin-card';
+    selectorDiv.style.marginBottom = '0.8rem';
+    selectorDiv.innerHTML = '<h3>&#128197; Scegli mediatore e sede</h3><div style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.8rem;align-items:end;"><div class="input-group" style="margin-bottom:0;"><label>Mediatore</label><select id="admin-sel-mediatore" onchange="onAdminMediatoreChange()"><option value="">Caricamento...</option></select></div><div class="input-group" style="margin-bottom:0;"><label>Sede</label><select id="admin-sel-sede"><option value="">-- seleziona mediatore --</option></select></div><button class="btn-add" onclick="aggiornaSlotAdmin()" style="padding:0.7rem 1rem;white-space:nowrap;">Cerca slot</button></div>';
+    prenotaTab.insertBefore(selectorDiv, prenotaTab.firstChild);
+  }
+});
+</script>
+
+</body>
+</html>
