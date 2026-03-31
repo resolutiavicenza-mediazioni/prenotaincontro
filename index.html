@@ -222,7 +222,6 @@
     border-bottom: 2px solid var(--cielo);
   }
 
-  /* Add user form */
   .add-user-form {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -291,7 +290,6 @@
     display: none;
   }
 
-  /* Users table */
   .users-table { width: 100%; border-collapse: collapse; }
 
   .users-table th {
@@ -350,14 +348,12 @@
     font-size: 0.85rem;
   }
 
-  /* Change password */
   .change-pwd-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; align-items: end; }
   @media (max-width: 500px) { .change-pwd-form { grid-template-columns: 1fr; } }
 
   /* ===== MAIN APP ===== */
   #app-screen { display: none; }
 
-  /* TOP BAR when logged in */
   .top-bar {
     background: rgba(26,74,122,0.06);
     border-bottom: 1px solid var(--bordo);
@@ -391,7 +387,6 @@
   .btn-topbar.admin { border-color: #2c3e50; color: #2c3e50; }
   .btn-topbar.admin:hover { background: #2c3e50; color: white; }
 
-  /* HEADER */
   header {
     background: linear-gradient(135deg, var(--blu) 0%, var(--azzurro) 100%);
     padding: 2rem 2.5rem;
@@ -426,11 +421,7 @@
     margin-top: 0.2rem;
   }
 
-  /* PROGRESS BAR */
-  .progress-bar {
-    height: 4px;
-    background: var(--cielo);
-  }
+  .progress-bar { height: 4px; background: var(--cielo); }
 
   .progress-fill {
     height: 100%;
@@ -438,14 +429,12 @@
     transition: width 0.4s ease;
   }
 
-  /* MAIN */
   main {
     max-width: 680px;
     margin: 0 auto;
     padding: 2.5rem 1.5rem 5rem;
   }
 
-  /* STEPS */
   .steps {
     display: flex;
     justify-content: center;
@@ -513,7 +502,6 @@
   .step.active .step-label { color: var(--azzurro); font-weight: 600; }
   .step.done .step-label { color: var(--verde); }
 
-  /* PANELS */
   .panel { display: none; }
   .panel.active { display: block; animation: fadeUp 0.35s ease; }
 
@@ -537,7 +525,6 @@
     line-height: 1.65;
   }
 
-  /* CARD */
   .card {
     background: white;
     border: 1px solid var(--bordo);
@@ -547,11 +534,7 @@
     box-shadow: 0 2px 8px rgba(41,128,185,0.06);
   }
 
-  /* LOADING */
-  .loading-box {
-    text-align: center;
-    padding: 4rem 1rem;
-  }
+  .loading-box { text-align: center; padding: 4rem 1rem; }
 
   .spinner {
     width: 44px; height: 44px;
@@ -565,7 +548,6 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-box p { color: var(--grigio); font-size: 0.85rem; }
 
-  /* SLOTS */
   .month-group { margin-bottom: 1.8rem; }
 
   .month-label {
@@ -610,14 +592,8 @@
 
   .slot-day { font-weight: 600; font-size: 0.92rem; }
   .slot-time { font-size: 0.78rem; color: var(--grigio); margin-top: 0.15rem; }
+  .slot-arrow { color: var(--celeste); font-size: 1.2rem; font-weight: 300; }
 
-  .slot-arrow {
-    color: var(--celeste);
-    font-size: 1.2rem;
-    font-weight: 300;
-  }
-
-  /* FORM */
   .input-group { margin-bottom: 1.3rem; }
 
   .input-group label {
@@ -648,7 +624,6 @@
     box-shadow: 0 0 0 3px rgba(41,128,185,0.12);
   }
 
-  /* SUMMARY */
   .summary-box {
     background: var(--cielo);
     border: 1px solid var(--bordo);
@@ -671,7 +646,6 @@
   .summary-label { color: var(--grigio); flex-shrink: 0; }
   .summary-value { font-weight: 600; color: var(--blu); text-align: right; }
 
-  /* BUTTONS */
   .btn {
     display: flex;
     align-items: center;
@@ -731,7 +705,6 @@
 
   .btn-back:hover { border-color: var(--azzurro); color: var(--azzurro); }
 
-  /* STATUS */
   .status-msg {
     padding: 0.8rem 1rem;
     font-size: 0.82rem;
@@ -754,7 +727,6 @@
     flex-shrink: 0;
   }
 
-  /* SUCCESS */
   .success-box { text-align: center; padding: 2rem 0; }
 
   .success-icon {
@@ -833,7 +805,6 @@
     </div>
     <button class="btn-login" onclick="doLogin()">Accedi →</button>
 
-    <!-- RICORDAMI -->
     <div style="display:flex; align-items:center; gap:0.6rem; margin-top:1rem;">
       <input type="checkbox" id="remember-me" style="width:16px; height:16px; accent-color:var(--azzurro); cursor:pointer; flex-shrink:0;" />
       <label for="remember-me" style="font-size:0.78rem; color:var(--grigio); cursor:pointer; user-select:none;">
@@ -955,11 +926,8 @@
       </div>
     </div>
 
-
     <!-- Tab Prenota per parte (admin) -->
     <div id="admin-tab-prenota" style="display:none">
-
-      <!-- Step A1: Scegli slot -->
       <div id="admin-step-slot">
         <div class="admin-card">
           <h3>📅 Scegli una data</h3>
@@ -976,7 +944,6 @@
         </div>
       </div>
 
-      <!-- Step A2: Dati parte -->
       <div id="admin-step-form" style="display:none">
         <div class="admin-card">
           <h3>📋 Dati della parte</h3>
@@ -984,7 +951,6 @@
             Slot selezionato: <strong id="admin-selected-display" style="color:var(--blu)"></strong>
           </p>
           <button onclick="showAdminStep('slot')" style="margin-bottom:1.2rem; padding:0.4rem 0.9rem; background:none; border:1.5px solid var(--bordo); border-radius:5px; font-family:Raleway,sans-serif; font-size:0.78rem; color:var(--grigio); cursor:pointer;">← Cambia data</button>
-
           <div class="input-group">
             <label>Nome e Cognome della parte</label>
             <input type="text" id="admin-input-nome" placeholder="Es. Mario Rossi" />
@@ -993,7 +959,6 @@
             <label>Email della parte</label>
             <input type="email" id="admin-input-email" placeholder="mario.rossi@email.it" />
           </div>
-
           <div style="background:var(--cielo); border:1px solid var(--bordo); border-radius:8px; padding:1.1rem 1.3rem; margin-bottom:1.2rem;">
             <p style="font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:0.9rem;">Identifica la procedura</p>
             <div class="input-group" style="margin-bottom:0.7rem;">
@@ -1009,7 +974,6 @@
                 oninput="adminSincronizzaCampi();" />
             </div>
           </div>
-
           <div class="input-group">
             <label>Modalità</label>
             <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
@@ -1022,13 +986,11 @@
               </label>
             </div>
           </div>
-
           <button class="btn-add" id="admin-confirm-btn" onclick="adminConfirmBooking()" style="width:100%; padding:0.9rem; margin-top:0.5rem; font-size:0.88rem;">✓ Conferma e invia email alla parte</button>
           <div id="admin-status-form" style="margin-top:0.8rem; font-size:0.82rem; padding:0.7rem 1rem; border-radius:6px; display:none;"></div>
         </div>
       </div>
 
-      <!-- Step A3: Successo -->
       <div id="admin-step-success" style="display:none">
         <div class="admin-card" style="text-align:center; padding:2.5rem 1.5rem;">
           <div style="width:64px; height:64px; background:linear-gradient(135deg,var(--verde),#2ecc71); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.2rem;">
@@ -1040,9 +1002,7 @@
           <button class="btn-add" onclick="showAdminStep('slot'); adminResetForm();" style="max-width:220px;">+ Nuova prenotazione</button>
         </div>
       </div>
-
     </div>
-
 
     <!-- Tab Configurazione -->
     <div id="admin-tab-config" style="display:none">
@@ -1053,11 +1013,8 @@
         </p>
         <div id="config-loading" style="text-align:center; padding:1.5rem; color:var(--grigio); font-size:0.85rem;">Caricamento…</div>
         <div id="config-form" style="display:none">
-
-          <!-- Sezione: Disponibilità -->
           <div style="margin-bottom:1.8rem;">
             <p style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:1rem; border-bottom:2px solid var(--cielo); padding-bottom:0.5rem;">📅 Disponibilità</p>
-
             <div class="input-group">
               <label>Giorni disponibili</label>
               <div style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:0.4rem;" id="cfg-giorni-wrap">
@@ -1069,7 +1026,6 @@
                 <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.88rem;font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer;"><input type="checkbox" value="6" class="cfg-giorno" style="accent-color:var(--azzurro);"> Sabato</label>
               </div>
             </div>
-
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-top:0.8rem;">
               <div class="input-group">
                 <label>Orari slot <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.8em;">(separati da virgola)</span></label>
@@ -1089,8 +1045,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Sezione: Mediatore -->
           <div style="margin-bottom:1.8rem;">
             <p style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:1rem; border-bottom:2px solid var(--cielo); padding-bottom:0.5rem;">👤 Mediatore</p>
             <div class="input-group">
@@ -1098,64 +1052,33 @@
               <input type="text" id="cfg-nome-mediatore" placeholder="Es. Avv. Mario Rossi - Vicenza" />
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
-              <div class="input-group">
-                <label>Email avvisi</label>
-                <input type="email" id="cfg-email-avviso" />
-              </div>
-              <div class="input-group">
-                <label>Email CC</label>
-                <input type="email" id="cfg-email-cc" />
-              </div>
-              <div class="input-group">
-                <label>Nome firma email</label>
-                <input type="text" id="cfg-nome-firma" />
-              </div>
-              <div class="input-group">
-                <label>Email firma</label>
-                <input type="email" id="cfg-email-firma" />
-              </div>
+              <div class="input-group"><label>Email avvisi</label><input type="email" id="cfg-email-avviso" /></div>
+              <div class="input-group"><label>Email CC</label><input type="email" id="cfg-email-cc" /></div>
+              <div class="input-group"><label>Nome firma email</label><input type="text" id="cfg-nome-firma" /></div>
+              <div class="input-group"><label>Email firma</label><input type="email" id="cfg-email-firma" /></div>
             </div>
-            <div class="input-group">
-              <label>Sede firma email</label>
-              <input type="text" id="cfg-sede-firma" />
-            </div>
+            <div class="input-group"><label>Sede firma email</label><input type="text" id="cfg-sede-firma" /></div>
           </div>
-
-          <!-- Sezione: App -->
           <div style="margin-bottom:1.8rem;">
             <p style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:1rem; border-bottom:2px solid var(--cielo); padding-bottom:0.5rem;">🖥 Interfaccia app</p>
-            <div class="input-group">
-              <label>Titolo header</label>
-              <input type="text" id="cfg-titolo-app" />
-            </div>
-            <div class="input-group">
-              <label>Sottotitolo header</label>
-              <input type="text" id="cfg-sottotitolo-app" />
-            </div>
-            <div class="input-group">
-              <label>Cartella radice Google Drive</label>
-              <input type="text" id="cfg-drive-root" />
-            </div>
+            <div class="input-group"><label>Titolo header</label><input type="text" id="cfg-titolo-app" /></div>
+            <div class="input-group"><label>Sottotitolo header</label><input type="text" id="cfg-sottotitolo-app" /></div>
+            <div class="input-group"><label>Cartella radice Google Drive</label><input type="text" id="cfg-drive-root" /></div>
           </div>
-
           <button class="btn-add" id="cfg-save-btn" onclick="saveConfig()" style="width:100%; padding:0.9rem; font-size:0.88rem;">💾 Salva configurazione</button>
           <div id="cfg-msg" style="margin-top:0.8rem; font-size:0.82rem; padding:0.7rem 1rem; border-radius:6px; display:none;"></div>
         </div>
       </div>
     </div>
 
-
     <!-- Tab Vedi Prenotazioni (admin) -->
     <div id="admin-tab-vedi" style="display:none">
       <div class="admin-card">
         <h3>📋 Tutte le prenotazioni</h3>
-
-        <!-- Filtri -->
         <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.8rem; margin-bottom:1.2rem; align-items:end;">
           <div class="input-group" style="margin-bottom:0;">
             <label>Cerca (nome, email, R.G., username)</label>
-            <input type="text" id="vedi-filtro" placeholder="Es. Rossi o 192/26"
-              oninput="caricaTuttePrenotazioni()" />
+            <input type="text" id="vedi-filtro" placeholder="Es. Rossi o 192/26" oninput="caricaTuttePrenotazioni()" />
           </div>
           <div class="input-group" style="margin-bottom:0;">
             <label>Stato</label>
@@ -1168,7 +1091,6 @@
           </div>
           <button class="btn-add" onclick="caricaTuttePrenotazioni()" style="padding:0.75rem 1rem; white-space:nowrap;">🔄 Aggiorna</button>
         </div>
-
         <div id="vedi-count" style="font-size:0.78rem; color:var(--grigio); margin-bottom:0.8rem;"></div>
         <div id="vedi-lista" style="min-height:100px;">
           <div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.88rem;">Clicca Aggiorna per caricare le prenotazioni.</div>
@@ -1181,14 +1103,8 @@
       <div class="admin-card">
         <h3>🔑 Cambia la tua password</h3>
         <div class="change-pwd-form">
-          <div class="input-group">
-            <label>Nuova password</label>
-            <input type="password" id="new-pwd-1" placeholder="Minimo 6 caratteri" />
-          </div>
-          <div class="input-group">
-            <label>Conferma password</label>
-            <input type="password" id="new-pwd-2" placeholder="Ripeti password" />
-          </div>
+          <div class="input-group"><label>Nuova password</label><input type="password" id="new-pwd-1" placeholder="Minimo 6 caratteri" /></div>
+          <div class="input-group"><label>Conferma password</label><input type="password" id="new-pwd-2" placeholder="Ripeti password" /></div>
         </div>
         <br>
         <button class="btn-add" onclick="changeMyPassword()" style="max-width:200px;">Salva password</button>
@@ -1231,8 +1147,6 @@
   </div>
 
   <main>
-
-    <!-- STEPS -->
     <div class="steps">
       <div class="step active" id="step-1">
         <div class="step-num">1</div>
@@ -1273,7 +1187,6 @@
           </div>
         </div>
       </div>
-      <!-- dropdown cambia mediatore -->
       <div id="cambia-mediatore-box" style="display:none; margin-top:0.8rem; border-top:1px solid var(--bordo); padding-top:0.8rem;">
         <p style="font-size:0.75rem; color:var(--grigio); margin-bottom:0.5rem;">Seleziona un altro mediatore disponibile:</p>
         <div id="lista-mediatori"></div>
@@ -1294,7 +1207,7 @@
     </div>
 
     <!-- PANEL 2: DATI PARTE -->
-<div class="panel" id="panel-2">
+    <div class="panel" id="panel-2">
       <p class="panel-title">I tuoi dati</p>
       <p class="panel-sub">Inserisci i dati richiesti per ricevere la conferma dell'appuntamento.</p>
       <button class="btn btn-back" onclick="goTo(1)">← Cambia data</button>
@@ -1307,32 +1220,20 @@
           <label>Indirizzo Email</label>
           <input type="email" id="input-email" placeholder="mario.rossi@email.it" />
         </div>
-
-        <!-- R.G. e Parte: alternativi -->
         <div style="background:var(--cielo); border:1px solid var(--bordo); border-radius:8px; padding:1.2rem 1.4rem; margin-bottom:1.2rem;">
           <p style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--azzurro); font-weight:600; margin-bottom:1rem;">Identifica la procedura</p>
-
           <div class="input-group" style="margin-bottom:0.8rem;">
-            <label>
-              Numero R.G.
-              <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em; margin-left:0.3rem;">— se hai già depositato la domanda</span>
-            </label>
+            <label>Numero R.G. <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em; margin-left:0.3rem;">— se hai già depositato la domanda</span></label>
             <input type="text" id="input-rg" placeholder="Es. 123/2024"
               style="text-transform:uppercase; letter-spacing:0.04em;"
               oninput="this.value=this.value.toUpperCase(); sincronizzaCampi();" />
           </div>
-
           <div style="text-align:center; color:var(--grigio); font-size:0.78rem; margin:0.6rem 0; letter-spacing:0.05em; text-transform:uppercase;">oppure</div>
-
           <div class="input-group" id="gruppo-parte" style="margin-bottom:0;">
-            <label>Nome della parte istante
-              <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em; margin-left:0.3rem;">— se non hai ancora il numero R.G.</span>
-            </label>
-            <input type="text" id="input-parte" placeholder="Es. Mario Rossi o Azienda Srl"
-              oninput="sincronizzaCampi();" />
+            <label>Nome della parte istante <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--grigio); font-size:0.8em; margin-left:0.3rem;">— se non hai ancora il numero R.G.</span></label>
+            <input type="text" id="input-parte" placeholder="Es. Mario Rossi o Azienda Srl" oninput="sincronizzaCampi();" />
           </div>
         </div>
-
         <div class="input-group">
           <label>Modalità dell'incontro</label>
           <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
@@ -1379,7 +1280,6 @@
         </button>
       </div>
     </div>
-
   </main>
 </div>
 
@@ -1427,11 +1327,7 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-dJqWvme-Dq19g0rAgJ-DglLBnqfRk-UIe89GC8CrTxVCab816embugW8Mw0BrkTDTg/exec';
 
 // ============================================================
-// GESTIONE UTENTI (localStorage)
-// ============================================================
-
-// ============================================================
-// HASH PASSWORD (usato solo lato client prima di inviare al server)
+// HASH PASSWORD
 // ============================================================
 async function hashPassword(pwd) {
   const encoder = new TextEncoder();
@@ -1441,7 +1337,6 @@ async function hashPassword(pwd) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Compatibilità — non più usate per gli utenti, solo per la sessione
 function getUsers() { return null; }
 function saveUsers(users) {}
 async function initUsers() { return []; }
@@ -1452,7 +1347,6 @@ async function initUsers() { return []; }
 let currentUser = null;
 
 function getSession() {
-  // Controlla prima localStorage (ricordami), poi sessionStorage
   const persistent = localStorage.getItem('mediazione_session_remember');
   if (persistent) return JSON.parse(persistent);
   const raw = sessionStorage.getItem('mediazione_session');
@@ -1479,7 +1373,6 @@ function clearSession() {
 // ============================================================
 // LOGIN / LOGOUT
 // ============================================================
-
 async function doLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
@@ -1498,7 +1391,6 @@ async function doLogin() {
   btn.textContent = 'Controllo in corso…';
 
   try {
-    // 1. Verifica se l'utente esiste nel server
     const checkResp = await fetch(SCRIPT_URL + '?action=checkLogin&username=' + encodeURIComponent(username));
     const checkData = await checkResp.json();
 
@@ -1508,7 +1400,6 @@ async function doLogin() {
       return;
     }
 
-    // 2. Primo accesso: nessuna password sul server
     if (!checkData.hasPassword) {
       if (password) {
         errEl.style.display = 'block';
@@ -1519,7 +1410,6 @@ async function doLogin() {
       return;
     }
 
-    // 3. Accesso normale: verifica password sul server
     if (!password) {
       errEl.style.display = 'block';
       errEl.textContent = '⚠ Inserisci la password.';
@@ -1564,9 +1454,8 @@ function doLogout() {
 }
 
 // ============================================================
-// NAVIGAZIONE TRA SCHERMATE
+// NAVIGAZIONE
 // ============================================================
-
 function showAdmin() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-screen').style.display = 'none';
@@ -1586,7 +1475,6 @@ function goToApp() {
     document.getElementById('btn-go-admin').style.display = 'inline-block';
   }
 
-  // Alert se email account non impostata
   var alertBanner = document.getElementById('email-missing-alert');
   if (!currentUser.emailAccount || currentUser.emailAccount === '') {
     if (alertBanner) alertBanner.style.display = 'block';
@@ -1594,15 +1482,11 @@ function goToApp() {
     if (alertBanner) alertBanner.style.display = 'none';
   }
 
-  // Inizializza sede/mediatore e poi carica slots
   window._slotsLoaded = false;
   window._mediatoreSelezionato = '';
   window._sedeSelezionata = '';
   inizializzaSedeMediatore();
 }
-
-// showAdminTab — see updated version below
-
 
 function showRememberInfo() {
   document.getElementById('remember-modal').style.display = 'flex';
@@ -1626,8 +1510,7 @@ function togglePwd(inputId, btn) {
 function showForgotPassword() {
   document.getElementById('forgot-username').value = '';
   document.getElementById('forgot-msg').style.display = 'none';
-  const modal = document.getElementById('forgot-modal');
-  modal.style.display = 'flex';
+  document.getElementById('forgot-modal').style.display = 'flex';
 }
 
 function closeForgotModal() {
@@ -1648,14 +1531,8 @@ function sendForgotEmail() {
   }
 
   const subject = encodeURIComponent('Reset password — utente: ' + username);
-  const body = encodeURIComponent(
-    'Ciao Marino,\n\n' +
-    'L\'utente "' + username + '" ha dimenticato la password e richiede un reset.\n\n' +
-    'Puoi reimpostarlo dal pannello admin dell\'applicazione di prenotazione.\n\n' +
-    'Grazie.'
-  );
-  const mailtoLink = 'mailto:resolutia.vicenza@gmail.com?subject=' + subject + '&body=' + body;
-  window.location.href = mailtoLink;
+  const body = encodeURIComponent('Ciao Marino,\n\nL\'utente "' + username + '" ha dimenticato la password e richiede un reset.\n\nPuoi reimpostarlo dal pannello admin dell\'applicazione di prenotazione.\n\nGrazie.');
+  window.location.href = 'mailto:resolutia.vicenza@gmail.com?subject=' + subject + '&body=' + body;
 
   msgEl.style.display = 'block';
   msgEl.style.background = '#d5f5e3';
@@ -1674,6 +1551,7 @@ function resetUserPassword(username) {
     })
     .catch(function() { renderUsersList(); });
 }
+
 let firstLoginUser = null;
 let firstLoginRemember = false;
 
@@ -1697,48 +1575,25 @@ async function doSetFirstPassword() {
   const btn   = document.querySelector('#firstlogin-screen .btn-login');
   errEl.style.display = 'none';
 
-  if (p1.length < 6) {
-    errEl.style.display = 'block';
-    errEl.textContent = '⚠ La password deve avere almeno 6 caratteri.';
-    return;
-  }
-  if (p1 !== p2) {
-    errEl.style.display = 'block';
-    errEl.textContent = '⚠ Le due password non coincidono.';
-    return;
-  }
-  if (!email || !email.includes('@')) {
-    errEl.style.display = 'block';
-    errEl.textContent = '⚠ Inserisci una email valida per il tuo account.';
-    return;
-  }
+  if (p1.length < 6) { errEl.style.display = 'block'; errEl.textContent = '⚠ La password deve avere almeno 6 caratteri.'; return; }
+  if (p1 !== p2) { errEl.style.display = 'block'; errEl.textContent = '⚠ Le due password non coincidono.'; return; }
+  if (!email || !email.includes('@')) { errEl.style.display = 'block'; errEl.textContent = '⚠ Inserisci una email valida per il tuo account.'; return; }
 
   btn.disabled = true;
   btn.textContent = 'Salvataggio…';
 
   try {
     const hash = await hashPassword(p1);
-
-    // Salva password
     const resp = await fetch(SCRIPT_URL + '?action=setPassword&username=' + encodeURIComponent(firstLoginUser.username) + '&hash=' + encodeURIComponent(hash));
     const data = await resp.json();
-    if (!data.ok) {
-      errEl.style.display = 'block';
-      errEl.textContent = '⚠ Errore nel salvataggio. Riprova.';
-      return;
-    }
-
-    // Salva email account
+    if (!data.ok) { errEl.style.display = 'block'; errEl.textContent = '⚠ Errore nel salvataggio. Riprova.'; return; }
     await fetch(SCRIPT_URL + '?action=setEmailAccount&username=' + encodeURIComponent(firstLoginUser.username) + '&email=' + encodeURIComponent(email));
-
     const updatedUser = { ...firstLoginUser, hash: hash, emailAccount: email };
     setSession(updatedUser, firstLoginRemember);
     document.getElementById('firstlogin-screen').style.display = 'none';
-
     if (updatedUser.role === 'admin') showAdmin();
     else if (updatedUser.role === 'mediatore') showMediatore();
     else goToApp();
-
   } catch(err) {
     errEl.style.display = 'block';
     errEl.textContent = '⚠ Errore di connessione. Riprova.';
@@ -1748,9 +1603,8 @@ async function doSetFirstPassword() {
 }
 
 // ============================================================
-// GESTIONE UTENTI (CRUD)
+// GESTIONE UTENTI — con ordinamento alfabetico *** MODIFICA 1 ***
 // ============================================================
-
 function renderUsersList() {
   var tbody = document.getElementById('users-tbody');
   tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--grigio);font-size:0.82rem;padding:1rem;">Caricamento utenti...</td></tr>';
@@ -1763,11 +1617,16 @@ function renderUsersList() {
         tbody.innerHTML = '<tr><td colspan="4" class="empty-users">Nessun utente registrato.</td></tr>';
         return;
       }
+
+      // *** ORDINAMENTO ALFABETICO PER USERNAME ***
+      data.users.sort(function(a, b) {
+        return a.username.toLowerCase().localeCompare(b.username.toLowerCase(), 'it');
+      });
+
       data.users.forEach(function(u) {
         var isMe   = u.username === currentUser.username;
         var canDel = !isMe;
 
-        // Cella 1: username
         var td1 = document.createElement('td');
         var strong = document.createElement('strong');
         strong.textContent = u.username;
@@ -1779,14 +1638,12 @@ function renderUsersList() {
           td1.appendChild(em);
         }
 
-        // Cella 2: ruolo
         var td2 = document.createElement('td');
         var badge = document.createElement('span');
         badge.className = 'badge badge-' + u.role;
         badge.textContent = u.role === 'admin' ? 'Admin' : u.role === 'mediatore' ? 'Mediatore' : 'Utente';
         td2.appendChild(badge);
 
-        // Cella 3: password
         var td3 = document.createElement('td');
         var pwdSpan = document.createElement('span');
         pwdSpan.style.fontSize = '0.75rem';
@@ -1799,7 +1656,6 @@ function renderUsersList() {
         }
         td3.appendChild(pwdSpan);
 
-        // Cella 4: azioni
         var td4 = document.createElement('td');
         if (u.hasPassword && canDel) {
           var btnReset = document.createElement('button');
@@ -1825,10 +1681,7 @@ function renderUsersList() {
         }
 
         var tr = document.createElement('tr');
-        tr.appendChild(td1);
-        tr.appendChild(td2);
-        tr.appendChild(td3);
-        tr.appendChild(td4);
+        tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
         tbody.appendChild(tr);
       });
     })
@@ -1877,17 +1730,10 @@ async function changeMyPassword() {
   const msgEl = document.getElementById('change-pwd-msg');
   msgEl.style.display = 'none';
 
-  if (p1.length < 6) {
-    showMsg(msgEl, '⚠ La password deve avere almeno 6 caratteri.', 'error');
-    return;
-  }
-  if (p1 !== p2) {
-    showMsg(msgEl, '⚠ Le due password non coincidono.', 'error');
-    return;
-  }
+  if (p1.length < 6) { showMsg(msgEl, '⚠ La password deve avere almeno 6 caratteri.', 'error'); return; }
+  if (p1 !== p2) { showMsg(msgEl, '⚠ Le due password non coincidono.', 'error'); return; }
 
   const hash = await hashPassword(p1);
-
   try {
     const resp = await fetch(SCRIPT_URL + '?action=setPassword&username=' + encodeURIComponent(currentUser.username) + '&hash=' + encodeURIComponent(hash));
     const data = await resp.json();
@@ -1897,10 +1743,8 @@ async function changeMyPassword() {
     return;
   }
 
-  // Aggiorna sessione
   currentUser = { ...currentUser, hash: hash };
   setSession(currentUser);
-
   document.getElementById('new-pwd-1').value = '';
   document.getElementById('new-pwd-2').value = '';
   showMsg(msgEl, '✓ Password aggiornata con successo.', 'success');
@@ -1920,31 +1764,23 @@ let allSlots = [];
 let selectedSlot = null;
 
 function loadSlots() {
-  var medParam = window._mediatoreSelezionato ? '&mediatore=' + encodeURIComponent(window._mediatoreSelezionato) : '';
+  var medParam  = window._mediatoreSelezionato ? '&mediatore=' + encodeURIComponent(window._mediatoreSelezionato) : '';
   var sedeParam = window._sedeSelezionata ? '&sede=' + encodeURIComponent(window._sedeSelezionata) : '';
   fetch(SCRIPT_URL + '?action=getSlots' + medParam + sedeParam)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.mediatore) {
-        document.getElementById('header-name').textContent = data.mediatore;
-      }
-      if (!data.ok) {
-        showLoadingError('Errore: ' + (data.error || 'Impossibile caricare gli slot.'));
-        return;
-      }
+      if (data.mediatore) document.getElementById('header-name').textContent = data.mediatore;
+      if (!data.ok) { showLoadingError('Errore: ' + (data.error || 'Impossibile caricare gli slot.')); return; }
       allSlots = data.slots || [];
       renderSlots(allSlots);
       document.getElementById('loading-box').style.display = 'none';
       document.getElementById('slots-wrapper').style.display = 'block';
     })
-    .catch(function() {
-      showLoadingError('Errore di connessione. Ricarica la pagina.');
-    });
+    .catch(function() { showLoadingError('Errore di connessione. Ricarica la pagina.'); });
 }
 
 function showLoadingError(msg) {
-  document.getElementById('loading-box').innerHTML =
-    '<p style="color:#c0392b; font-size:0.88rem;">' + msg + '</p>';
+  document.getElementById('loading-box').innerHTML = '<p style="color:#c0392b; font-size:0.88rem;">' + msg + '</p>';
 }
 
 function renderSlots(slots) {
@@ -1954,8 +1790,7 @@ function renderSlots(slots) {
     return;
   }
 
-  const mesi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
-                'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  const mesi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
   const groups = {};
 
   slots.forEach(function(slot) {
@@ -1973,18 +1808,14 @@ function renderSlots(slots) {
 
     groups[month].forEach(function(slot) {
       const parts = slot.display.split(' — ');
-      const dayPart = parts[0] || slot.display;
-      const timePart = parts[1] || '';
-
       const el = document.createElement('div');
       el.className = 'slot-item';
       el.innerHTML =
         '<div>' +
-          '<div class="slot-day">' + dayPart + '</div>' +
-          '<div class="slot-time">' + timePart + '</div>' +
+          '<div class="slot-day">' + (parts[0] || slot.display) + '</div>' +
+          '<div class="slot-time">' + (parts[1] || '') + '</div>' +
         '</div>' +
         '<div class="slot-arrow">→</div>';
-
       el.onclick = function() { selectSlot(slot, el); };
       mg.appendChild(el);
     });
@@ -1994,9 +1825,7 @@ function renderSlots(slots) {
 }
 
 function selectSlot(slot, el) {
-  document.querySelectorAll('.slot-item').forEach(function(s) {
-    s.classList.remove('selected');
-  });
+  document.querySelectorAll('.slot-item').forEach(function(s) { s.classList.remove('selected'); });
   el.classList.add('selected');
   selectedSlot = slot;
   setTimeout(function() { goTo(2); }, 300);
@@ -2009,7 +1838,6 @@ function goToSummary() {
   const rg       = document.getElementById('input-rg').value.trim().toUpperCase();
   const modalita = document.querySelector('input[name="modalita"]:checked').value;
   var sedeSelezionata = window._sedeSelezionata || '';
-  var mediatoreSelezionato = window._mediatoreSelezionato || '';
   const modalitaStr = modalita === 'telematica' ? 'Telematica (da remoto)' : ('In presenza - ' + (sedeSelezionata || 'Vicenza'));
   const status = document.getElementById('status-form');
 
@@ -2072,17 +1900,14 @@ function confirmBooking() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.ok) {
-        var meetHtml = data.meetLink
-          ? '<br>🎥 <strong>Google Meet:</strong> <a href="' + data.meetLink + '" target="_blank" style="color:var(--verde);">' + data.meetLink + '</a>'
-          : '';
+        var meetHtml = data.meetLink ? '<br>🎥 <strong>Google Meet:</strong> <a href="' + data.meetLink + '" target="_blank" style="color:var(--verde);">' + data.meetLink + '</a>' : '';
         document.getElementById('success-detail').innerHTML =
           '📅 ' + selectedSlot.display + '<br>' +
           '👤 ' + nome + '<br>' +
           '✉️ ' + email + '<br>' +
           '⚖️ Parte istante: ' + parte + '<br>' +
           (rg ? '📋 R.G.: ' + rg + '<br>' : '') +
-          '📍 Modalità: ' + modalitaStr +
-          meetHtml;
+          '📍 Modalità: ' + modalitaStr + meetHtml;
         goTo(4);
       } else {
         showError(status, data.error || 'Errore nella prenotazione. Riprova.');
@@ -2099,7 +1924,6 @@ function goTo(n) {
   document.querySelectorAll('.panel').forEach(function(p, i) {
     p.classList.toggle('active', i === n - 1);
   });
-
   for (var i = 1; i <= 3; i++) {
     var el = document.getElementById('step-' + i);
     if (!el) continue;
@@ -2107,7 +1931,6 @@ function goTo(n) {
     if (i < n) el.classList.add('done');
     else if (i === n) el.classList.add('active');
   }
-
   var pct = Math.min(n * 25, 100);
   document.getElementById('progress-fill').style.width = pct + '%';
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2119,7 +1942,7 @@ function showError(el, msg) {
 }
 
 // ============================================================
-// ADMIN BOOKING — prenotazione diretta dal pannello admin
+// ADMIN BOOKING
 // ============================================================
 var adminSelectedSlot = null;
 
@@ -2129,18 +1952,15 @@ function loadAdminSlots() {
     .then(function(data) {
       document.getElementById('admin-loading-box').style.display = 'none';
       if (!data.ok) {
-        document.getElementById('admin-loading-box').innerHTML =
-          '<p style="color:var(--rosso); font-size:0.85rem;">Errore: ' + (data.error || 'impossibile caricare gli slot.') + '</p>';
+        document.getElementById('admin-loading-box').innerHTML = '<p style="color:var(--rosso); font-size:0.85rem;">Errore: ' + (data.error || 'impossibile caricare gli slot.') + '</p>';
         document.getElementById('admin-loading-box').style.display = 'block';
         return;
       }
-      var slots = data.slots || [];
-      renderAdminSlots(slots);
+      renderAdminSlots(data.slots || []);
       document.getElementById('admin-slots-wrapper').style.display = 'block';
     })
     .catch(function() {
-      document.getElementById('admin-loading-box').innerHTML =
-        '<p style="color:var(--rosso); font-size:0.85rem;">Errore di connessione.</p>';
+      document.getElementById('admin-loading-box').innerHTML = '<p style="color:var(--rosso); font-size:0.85rem;">Errore di connessione.</p>';
     });
 }
 
@@ -2150,8 +1970,7 @@ function renderAdminSlots(slots) {
     container.innerHTML = '<p style="text-align:center; color:var(--grigio); font-size:0.88rem; padding:2rem 0;">Nessuno slot disponibile nel periodo consentito.</p>';
     return;
   }
-  var mesi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
-              'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var mesi = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
   var groups = {};
   slots.forEach(function(slot) {
     var d = new Date(slot.start);
@@ -2175,9 +1994,7 @@ function renderAdminSlots(slots) {
         '</div>' +
         '<div class="slot-arrow">→</div>';
       el.onclick = function() {
-        document.querySelectorAll('#admin-slots-container .slot-item').forEach(function(s) {
-          s.classList.remove('selected');
-        });
+        document.querySelectorAll('#admin-slots-container .slot-item').forEach(function(s) { s.classList.remove('selected'); });
         el.classList.add('selected');
         adminSelectedSlot = slot;
         document.getElementById('admin-selected-display').textContent = slot.display;
@@ -2200,8 +2017,7 @@ function adminSincronizzaCampi() {
   var parteEl = document.getElementById('admin-input-parte');
   var gruppo  = document.getElementById('admin-gruppo-parte');
   if (rgVal.length > 0) {
-    parteEl.value = '';
-    parteEl.disabled = true;
+    parteEl.value = ''; parteEl.disabled = true;
     parteEl.placeholder = 'Non necessario — R.G. già inserito';
     gruppo.style.opacity = '0.45';
   } else {
@@ -2233,22 +2049,10 @@ function adminConfirmBooking() {
   var modalita = document.querySelector('input[name="admin-modalita"]:checked').value;
 
   status.style.display = 'none';
-  if (!adminSelectedSlot) {
-    status.style.display = 'block'; status.style.background = '#fdecea';
-    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Nessuna data selezionata.'; return;
-  }
-  if (!nome) {
-    status.style.display = 'block'; status.style.background = '#fdecea';
-    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Inserisci il nome della parte.'; return;
-  }
-  if (!email || !email.includes('@')) {
-    status.style.display = 'block'; status.style.background = '#fdecea';
-    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Inserisci un email valida.'; return;
-  }
-  if (!rg && !parte) {
-    status.style.display = 'block'; status.style.background = '#fdecea';
-    status.style.color = 'var(--rosso)'; status.textContent = '⚠ Inserisci R.G. o nome parte istante.'; return;
-  }
+  if (!adminSelectedSlot) { status.style.display='block'; status.style.background='#fdecea'; status.style.color='var(--rosso)'; status.textContent='⚠ Nessuna data selezionata.'; return; }
+  if (!nome) { status.style.display='block'; status.style.background='#fdecea'; status.style.color='var(--rosso)'; status.textContent='⚠ Inserisci il nome della parte.'; return; }
+  if (!email || !email.includes('@')) { status.style.display='block'; status.style.background='#fdecea'; status.style.color='var(--rosso)'; status.textContent='⚠ Inserisci un email valida.'; return; }
+  if (!rg && !parte) { status.style.display='block'; status.style.background='#fdecea'; status.style.color='var(--rosso)'; status.textContent='⚠ Inserisci R.G. o nome parte istante.'; return; }
 
   btn.disabled = true;
   btn.textContent = 'Creazione in corso…';
@@ -2262,8 +2066,7 @@ function adminConfirmBooking() {
     '&email='        + encodeURIComponent(email) +
     '&parteIstante=' + encodeURIComponent(parte || rg) +
     '&modalita='     + encodeURIComponent(modalita) +
-    '&rg='           + encodeURIComponent(rg) +
-    '&username='     + encodeURIComponent(currentUser ? currentUser.username : '');
+    '&rg='           + encodeURIComponent(rg);
 
   fetch(url)
     .then(function(r) { return r.json(); })
@@ -2271,50 +2074,38 @@ function adminConfirmBooking() {
       btn.disabled = false;
       btn.textContent = '✓ Conferma e invia email alla parte';
       if (data.ok) {
-        var meetHtml = data.meetLink
-          ? '<br>🎥 <strong>Google Meet:</strong> <a href="' + data.meetLink + '" target="_blank" style="color:var(--verde);">' + data.meetLink + '</a>'
-          : '';
+        var meetHtml = data.meetLink ? '<br>🎥 <strong>Google Meet:</strong> <a href="' + data.meetLink + '" target="_blank" style="color:var(--verde);">' + data.meetLink + '</a>' : '';
         document.getElementById('admin-success-detail').innerHTML =
           '📅 ' + adminSelectedSlot.display + '<br>' +
           '👤 ' + nome + '<br>' +
           '✉️ ' + email + '<br>' +
           (rg ? '📋 R.G.: ' + rg + '<br>' : '⚖️ ' + parte + '<br>') +
-          '📍 ' + (modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)') +
-          meetHtml;
+          '📍 ' + (modalita === 'telematica' ? 'Telematica (da remoto)' : 'In presenza (Vicenza)') + meetHtml;
         showAdminStep('success');
       } else {
-        status.style.display = 'block';
-        status.style.background = '#fdecea';
-        status.style.color = 'var(--rosso)';
+        status.style.display = 'block'; status.style.background = '#fdecea'; status.style.color = 'var(--rosso)';
         status.textContent = '⚠ ' + (data.error || 'Errore nella prenotazione.');
       }
     })
     .catch(function() {
-      btn.disabled = false;
-      btn.textContent = '✓ Conferma e invia email alla parte';
-      status.style.display = 'block';
-      status.style.background = '#fdecea';
-      status.style.color = 'var(--rosso)';
+      btn.disabled = false; btn.textContent = '✓ Conferma e invia email alla parte';
+      status.style.display = 'block'; status.style.background = '#fdecea'; status.style.color = 'var(--rosso)';
       status.textContent = '⚠ Errore di rete. Riprova.';
     });
 }
 
 // ============================================================
-// SINCRONIZZAZIONE CAMPI R.G. / PARTE (alternativi)
+// SINCRONIZZAZIONE CAMPI R.G. / PARTE
 // ============================================================
 function sincronizzaCampi() {
   var rgVal    = document.getElementById('input-rg').value.trim();
   var parteEl  = document.getElementById('input-parte');
   var gruppoEl = document.getElementById('gruppo-parte');
-
   if (rgVal.length > 0) {
-    // R.G. compilato → disabilita e svuota campo parte
-    parteEl.value = '';
-    parteEl.disabled = true;
+    parteEl.value = ''; parteEl.disabled = true;
     parteEl.placeholder = 'Non necessario — R.G. già inserito';
     gruppoEl.style.opacity = '0.45';
   } else {
-    // R.G. vuoto → riabilita campo parte
     parteEl.disabled = false;
     parteEl.placeholder = 'Es. Mario Rossi o Azienda Srl';
     gruppoEl.style.opacity = '1';
@@ -2324,47 +2115,32 @@ function sincronizzaCampi() {
 // ============================================================
 // CONFIGURAZIONE ADMIN
 // ============================================================
-
 function loadConfig() {
   fetch(SCRIPT_URL + '?action=getConfig')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       document.getElementById('config-loading').style.display = 'none';
-      if (!data.ok) {
-        document.getElementById('sede-mediatore-bar').style.display = 'none';
-        window._mediatoreSelezionato = username;
-        ricaricaSlots();
-        return;
-      }
+      if (!data.ok) { return; }
       var cfg = {};
       data.config.forEach(function(item) { cfg[item.key] = item.value; });
-
-      // Popola campi
-      document.getElementById('cfg-slot-hours').value     = cfg['slot_hours']        || '9,11,15,17';
-      document.getElementById('cfg-slot-duration').value  = cfg['slot_duration']     || '2';
-      document.getElementById('cfg-days-min').value       = cfg['days_min']          || '22';
-      document.getElementById('cfg-days-max').value       = cfg['days_max']          || '40';
-      document.getElementById('cfg-nome-mediatore').value = cfg['nome_mediatore']    || '';
-      document.getElementById('cfg-email-avviso').value   = cfg['email_avviso']      || '';
-      document.getElementById('cfg-email-cc').value       = cfg['email_cc']          || '';
-      document.getElementById('cfg-nome-firma').value     = cfg['nome_firma']        || '';
-      document.getElementById('cfg-sede-firma').value     = cfg['sede_firma']        || '';
-      document.getElementById('cfg-email-firma').value    = cfg['email_firma']       || '';
-      document.getElementById('cfg-titolo-app').value     = cfg['titolo_app']        || '';
-      document.getElementById('cfg-sottotitolo-app').value= cfg['sottotitolo_app']   || '';
-      document.getElementById('cfg-drive-root').value     = cfg['drive_root_folder'] || '';
-
-      // Checkbox giorni
+      document.getElementById('cfg-slot-hours').value      = cfg['slot_hours']        || '9,11,15,17';
+      document.getElementById('cfg-slot-duration').value   = cfg['slot_duration']     || '2';
+      document.getElementById('cfg-days-min').value        = cfg['days_min']          || '22';
+      document.getElementById('cfg-days-max').value        = cfg['days_max']          || '40';
+      document.getElementById('cfg-nome-mediatore').value  = cfg['nome_mediatore']    || '';
+      document.getElementById('cfg-email-avviso').value    = cfg['email_avviso']      || '';
+      document.getElementById('cfg-email-cc').value        = cfg['email_cc']          || '';
+      document.getElementById('cfg-nome-firma').value      = cfg['nome_firma']        || '';
+      document.getElementById('cfg-sede-firma').value      = cfg['sede_firma']        || '';
+      document.getElementById('cfg-email-firma').value     = cfg['email_firma']       || '';
+      document.getElementById('cfg-titolo-app').value      = cfg['titolo_app']        || '';
+      document.getElementById('cfg-sottotitolo-app').value = cfg['sottotitolo_app']   || '';
+      document.getElementById('cfg-drive-root').value      = cfg['drive_root_folder'] || '';
       var giorni = (cfg['giorni_disponibili'] || '1,2,3,4').split(',').map(function(x){ return x.trim(); });
-      document.querySelectorAll('.cfg-giorno').forEach(function(cb) {
-        cb.checked = giorni.indexOf(cb.value) !== -1;
-      });
-
+      document.querySelectorAll('.cfg-giorno').forEach(function(cb) { cb.checked = giorni.indexOf(cb.value) !== -1; });
       document.getElementById('config-form').style.display = 'block';
     })
-    .catch(function() {
-      document.getElementById('config-loading').textContent = 'Errore nel caricamento della configurazione.';
-    });
+    .catch(function() { document.getElementById('config-loading').textContent = 'Errore nel caricamento della configurazione.'; });
 }
 
 function saveConfig() {
@@ -2374,11 +2150,8 @@ function saveConfig() {
   btn.disabled = true;
   btn.textContent = 'Salvataggio…';
 
-  // Raccoglie giorni selezionati
   var giorni = [];
-  document.querySelectorAll('.cfg-giorno:checked').forEach(function(cb) {
-    giorni.push(cb.value);
-  });
+  document.querySelectorAll('.cfg-giorno:checked').forEach(function(cb) { giorni.push(cb.value); });
 
   var items = [
     { key: 'slot_hours',         value: document.getElementById('cfg-slot-hours').value.trim() },
@@ -2400,28 +2173,20 @@ function saveConfig() {
   fetch(SCRIPT_URL + '?action=saveConfig&items=' + encodeURIComponent(JSON.stringify(items)))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      btn.disabled = false;
-      btn.textContent = '💾 Salva configurazione';
+      btn.disabled = false; btn.textContent = '💾 Salva configurazione';
       msg.style.display = 'block';
       if (data.ok) {
-        msg.style.background = '#d5f5e3';
-        msg.style.color = 'var(--verde)';
+        msg.style.background = '#d5f5e3'; msg.style.color = 'var(--verde)';
         msg.textContent = '✓ Configurazione salvata. Le modifiche sono attive immediatamente.';
-        // Reset cache slot per prossimo caricamento
-        window._adminSlotsLoaded = false;
-        window._slotsLoaded = false;
+        window._adminSlotsLoaded = false; window._slotsLoaded = false;
       } else {
-        msg.style.background = '#fdecea';
-        msg.style.color = 'var(--rosso)';
+        msg.style.background = '#fdecea'; msg.style.color = 'var(--rosso)';
         msg.textContent = '⚠ Errore: ' + (data.error || 'impossibile salvare.');
       }
     })
     .catch(function() {
-      btn.disabled = false;
-      btn.textContent = '💾 Salva configurazione';
-      msg.style.display = 'block';
-      msg.style.background = '#fdecea';
-      msg.style.color = 'var(--rosso)';
+      btn.disabled = false; btn.textContent = '💾 Salva configurazione';
+      msg.style.display = 'block'; msg.style.background = '#fdecea'; msg.style.color = 'var(--rosso)';
       msg.textContent = '⚠ Errore di rete.';
     });
 }
@@ -2435,7 +2200,6 @@ window._sedeSelezionata      = '';
 window._mediatoreCfg         = null;
 
 function inizializzaSedeMediatore() {
-  // Mediatore di default = chi ha creato l'account
   var creatoDa = currentUser && currentUser.creatoDa ? currentUser.creatoDa : '';
   if (creatoDa) {
     caricaMediatoreCfg(creatoDa);
@@ -2443,9 +2207,8 @@ function inizializzaSedeMediatore() {
     fetch(SCRIPT_URL + '?action=getMediatori&tipo=')
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.ok && data.mediatori && data.mediatori.length > 0) {
-          caricaMediatoreCfg(data.mediatori[0].username);
-        } else { ricaricaSlots(); }
+        if (data.ok && data.mediatori && data.mediatori.length > 0) caricaMediatoreCfg(data.mediatori[0].username);
+        else ricaricaSlots();
       })
       .catch(function() { ricaricaSlots(); });
   }
@@ -2458,40 +2221,26 @@ function caricaMediatoreCfg(username) {
       if (!data.ok) {
         document.getElementById('sede-mediatore-bar').style.display = 'none';
         window._mediatoreSelezionato = username;
-        ricaricaSlots();
-        return;
+        ricaricaSlots(); return;
       }
       window._mediatoreCfg         = data;
       window._mediatoreSelezionato = data.username;
       window._mediatoreNome        = data.nome;
 
-      // Popola select sede
       var select = document.getElementById('select-sede');
       select.innerHTML = '';
       if (data.sediPresenza && data.sediPresenza.length > 0) {
-        data.sediPresenza.forEach(function(s) {
-          var opt = document.createElement('option');
-          opt.value = s; opt.textContent = s;
-          select.appendChild(opt);
-        });
+        data.sediPresenza.forEach(function(s) { var opt=document.createElement('option'); opt.value=s; opt.textContent=s; select.appendChild(opt); });
       }
-      if (data.online) {
-        var opt = document.createElement('option');
-        opt.value = 'Telematica'; opt.textContent = 'Telematica (da remoto)';
-        select.appendChild(opt);
-      }
+      if (data.online) { var opt=document.createElement('option'); opt.value='Telematica'; opt.textContent='Telematica (da remoto)'; select.appendChild(opt); }
 
-      // Mostra la barra
       document.getElementById('sede-mediatore-bar').style.display = 'block';
       document.getElementById('mediatore-nome').textContent = data.nome;
 
-      // Imposta sede default
       if (select.options.length > 0) {
         window._sedeSelezionata = select.options[0].value;
         aggiornaModalitaDaSede();
       }
-
-      // Ricarica slots con config mediatore
       ricaricaSlots();
     })
     .catch(function() { ricaricaSlots(); });
@@ -2508,36 +2257,25 @@ function onSedeChange() {
 function aggiornaModalitaDaSede() {
   var sede = window._sedeSelezionata;
   var isTelematica = (sede === 'Telematica');
-  // Seleziona automaticamente la modalita radio
-  var radios = document.querySelectorAll('input[name="modalita"]');
-  radios.forEach(function(r) {
-    if (isTelematica) { r.checked = (r.value === 'telematica'); }
-    else              { r.checked = (r.value === 'presenza');   }
+  document.querySelectorAll('input[name="modalita"]').forEach(function(r) {
+    if (isTelematica) r.checked = (r.value === 'telematica');
+    else              r.checked = (r.value === 'presenza');
   });
-  // Aggiorna label sede accanto a "In presenza"
   var label = document.getElementById('label-sede-presenza');
   if (label) label.textContent = isTelematica ? '' : ('(' + sede + ')');
 }
 
 function onModalitaChange() {
   var modalita = document.querySelector('input[name="modalita"]:checked').value;
-  // Se l'utente cambia manualmente a telematica ma la sede non è telematica
   if (modalita === 'telematica' && window._sedeSelezionata !== 'Telematica') {
     var select = document.getElementById('select-sede');
     for (var i = 0; i < select.options.length; i++) {
-      if (select.options[i].value === 'Telematica') {
-        select.selectedIndex = i;
-        window._sedeSelezionata = 'Telematica';
-        break;
-      }
+      if (select.options[i].value === 'Telematica') { select.selectedIndex = i; window._sedeSelezionata = 'Telematica'; break; }
     }
   }
   if (modalita === 'presenza' && window._sedeSelezionata === 'Telematica') {
     var select2 = document.getElementById('select-sede');
-    if (select2.options.length > 0 && select2.options[0].value !== 'Telematica') {
-      select2.selectedIndex = 0;
-      window._sedeSelezionata = select2.options[0].value;
-    }
+    if (select2.options.length > 0 && select2.options[0].value !== 'Telematica') { select2.selectedIndex = 0; window._sedeSelezionata = select2.options[0].value; }
   }
   var label2 = document.getElementById('label-sede-presenza');
   if (label2) label2.textContent = (modalita === 'presenza' && window._sedeSelezionata !== 'Telematica') ? ('(' + window._sedeSelezionata + ')') : '';
@@ -2564,10 +2302,7 @@ function mostraCambiaMediatore() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       lista.innerHTML = '';
-      if (!data.ok || !data.mediatori || data.mediatori.length === 0) {
-        lista.innerHTML = '<span style="font-size:0.78rem;color:var(--grigio);">Nessun altro mediatore disponibile.</span>';
-        return;
-      }
+      if (!data.ok || !data.mediatori || data.mediatori.length === 0) { lista.innerHTML = '<span style="font-size:0.78rem;color:var(--grigio);">Nessun altro mediatore disponibile.</span>'; return; }
       data.mediatori.forEach(function(m) {
         var btn = document.createElement('button');
         btn.style.cssText = 'display:block; width:100%; text-align:left; padding:0.5rem 0.8rem; margin-bottom:0.3rem; background:' + (m.username === window._mediatoreSelezionato ? 'var(--cielo)' : 'none') + '; border:1px solid var(--bordo); border-radius:6px; cursor:pointer; font-family:Raleway,sans-serif; font-size:0.83rem; color:var(--testo);';
@@ -2587,7 +2322,7 @@ function mostraCambiaMediatore() {
 }
 
 // ============================================================
-// LE MIE PRENOTAZIONI
+// LE MIE PRENOTAZIONI — ordinate per data, cancellate in fondo *** MODIFICA 2 ***
 // ============================================================
 var _miePrenotazioniVisible = false;
 
@@ -2595,17 +2330,13 @@ function toggleMiePrenotazioni() {
   _miePrenotazioniVisible = !_miePrenotazioniVisible;
   var panel = document.getElementById('panel-mie-prenotazioni');
   if (_miePrenotazioniVisible) {
-    // Nascondi tutti i pannelli prenotazione
     document.querySelectorAll('.panel').forEach(function(p) { p.style.display = 'none'; });
     panel.style.display = 'block';
     document.getElementById('btn-mie-prenotazioni').textContent = '← Nuova prenotazione';
     caricaMiePrenotazioni();
   } else {
     panel.style.display = 'none';
-    // Ripristina il pannello corrente
-    document.querySelectorAll('.panel').forEach(function(p, i) {
-      p.style.display = (i === 0) ? 'block' : 'none';
-    });
+    document.querySelectorAll('.panel').forEach(function(p, i) { p.style.display = (i === 0) ? 'block' : 'none'; });
     goTo(1);
     document.getElementById('btn-mie-prenotazioni').textContent = '📋 Le mie prenotazioni';
     if (!window._mediatoreSelezionato) inizializzaSedeMediatore();
@@ -2625,6 +2356,15 @@ function caricaMiePrenotazioni() {
         container.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;color:var(--grigio);font-size:0.88rem;">Nessuna prenotazione trovata.</div>';
         return;
       }
+
+      // *** ORDINAMENTO: prima per data crescente, cancellate sempre in fondo ***
+      data.prenotazioni.sort(function(a, b) {
+        var aCancellato = a.stato === 'CANCELLATO' ? 1 : 0;
+        var bCancellato = b.stato === 'CANCELLATO' ? 1 : 0;
+        if (aCancellato !== bCancellato) return aCancellato - bCancellato;
+        return new Date(a.start || a.data) - new Date(b.start || b.data);
+      });
+
       data.prenotazioni.forEach(function(p) {
         var statoColor = p.stato === 'CONFERMATO' ? 'var(--verde)' : p.stato === 'CANCELLATO' ? 'var(--rosso)' : 'var(--arancio)';
         var statoTesto = p.stato === 'CONFERMATO' ? '\u2705 Confermato' : p.stato === 'CANCELLATO' ? '\u274c Cancellato' : '\u23f3 In attesa';
@@ -2632,7 +2372,6 @@ function caricaMiePrenotazioni() {
         var div = document.createElement('div');
         div.style.cssText = 'padding:1rem 0; border-bottom:1px solid var(--bordo); display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;';
 
-        // Colonna sinistra: dettagli
         var left = document.createElement('div');
         left.style.flex = '1';
 
@@ -2657,10 +2396,8 @@ function caricaMiePrenotazioni() {
           mDiv.appendChild(a);
         }
         left.appendChild(mDiv);
-
         div.appendChild(left);
 
-        // Colonna destra: stato + cancella
         var right = document.createElement('div');
         right.style.cssText = 'display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem; flex-shrink:0;';
 
@@ -2675,9 +2412,7 @@ function caricaMiePrenotazioni() {
           btn.style.cssText = 'font-size:0.7rem; padding:0.25rem 0.65rem; background:none; border:1.5px solid #e8bdb9; border-radius:5px; color:var(--rosso); cursor:pointer; font-family:Raleway,sans-serif; font-weight:600;';
           btn.onmouseover = function() { this.style.background='var(--rosso)'; this.style.color='white'; };
           btn.onmouseout  = function() { this.style.background='none'; this.style.color='var(--rosso)'; };
-          (function(eid, nome, dataPren) {
-            btn.onclick = function() { cancellaMia(eid, nome, dataPren); };
-          })(p.eventId, p.parte || p.richiedente, p.data);
+          (function(eid, nome, dataPren) { btn.onclick = function() { cancellaMia(eid, nome, dataPren); }; })(p.eventId, p.parte || p.richiedente, p.data);
           right.appendChild(btn);
         }
 
@@ -2685,7 +2420,6 @@ function caricaMiePrenotazioni() {
         container.appendChild(div);
       });
 
-      // Remove last border
       var items = container.querySelectorAll('div[style*="border-bottom"]');
       if (items.length > 0) items[items.length-1].style.borderBottom = 'none';
     })
@@ -2693,7 +2427,6 @@ function caricaMiePrenotazioni() {
       container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.88rem;">Errore nel caricamento.</div>';
     });
 }
-
 
 function caricaTuttePrenotazioni() {
   var lista   = document.getElementById('vedi-lista');
@@ -2704,18 +2437,13 @@ function caricaTuttePrenotazioni() {
   lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>';
   count.textContent = '';
 
-  var url = SCRIPT_URL + '?action=getTuttePrenotazioni' +
-    '&filtro=' + encodeURIComponent(filtro) +
-    '&stato='  + encodeURIComponent(stato);
-
-  fetch(url)
+  fetch(SCRIPT_URL + '?action=getTuttePrenotazioni&filtro=' + encodeURIComponent(filtro) + '&stato=' + encodeURIComponent(stato))
     .then(function(r) { return r.json(); })
     .then(function(data) {
       lista.innerHTML = '';
       if (!data.ok || !data.prenotazioni || data.prenotazioni.length === 0) {
         lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Nessuna prenotazione trovata.</div>';
-        count.textContent = '';
-        return;
+        count.textContent = ''; return;
       }
 
       var pren = data.prenotazioni;
@@ -2730,137 +2458,74 @@ function caricaTuttePrenotazioni() {
         div.style.cssText = 'padding:0.9rem 0; border-bottom:1px solid var(--bordo); display:grid; grid-template-columns:1fr auto; gap:1rem; align-items:start;';
 
         var left = document.createElement('div');
-
-        // Data e modalita
-        var dataDiv = document.createElement('div');
-        dataDiv.style.cssText = 'font-weight:600; color:var(--blu); font-size:0.9rem; margin-bottom:0.2rem;';
-        dataDiv.textContent = p.data || '—';
-        left.appendChild(dataDiv);
-
-        // Parte / R.G.
-        var parteDiv = document.createElement('div');
-        parteDiv.style.cssText = 'font-size:0.82rem; color:var(--testo); margin-bottom:0.15rem;';
-        parteDiv.textContent = (p.parte || p.richiedente || '') + (p.rg ? ' · R.G. ' + p.rg : '');
-        left.appendChild(parteDiv);
-
-        // Richiedente e username
-        var utDiv = document.createElement('div');
-        utDiv.style.cssText = 'font-size:0.78rem; color:var(--grigio);';
-        utDiv.textContent = (p.email || '') + (p.username ? ' · @' + p.username : '');
-        left.appendChild(utDiv);
-
-        // Modalita e Meet
-        var modDiv = document.createElement('div');
-        modDiv.style.cssText = 'font-size:0.78rem; color:var(--grigio); margin-top:0.1rem;';
-        modDiv.textContent = p.modalita || '';
-        if (p.meetLink) {
-          var a = document.createElement('a');
-          a.href = p.meetLink;
-          a.target = '_blank';
-          a.style.cssText = 'color:var(--verde); margin-left:0.5rem;';
-          a.textContent = 'Meet';
-          modDiv.appendChild(a);
-        }
+        var d1 = document.createElement('div'); d1.style.cssText = 'font-weight:600; color:var(--blu); font-size:0.9rem; margin-bottom:0.2rem;'; d1.textContent = p.data || '—'; left.appendChild(d1);
+        var d2 = document.createElement('div'); d2.style.cssText = 'font-size:0.82rem; color:var(--testo); margin-bottom:0.15rem;'; d2.textContent = (p.parte || p.richiedente || '') + (p.rg ? ' · R.G. ' + p.rg : ''); left.appendChild(d2);
+        var d3 = document.createElement('div'); d3.style.cssText = 'font-size:0.78rem; color:var(--grigio);'; d3.textContent = (p.email || '') + (p.username ? ' · @' + p.username : ''); left.appendChild(d3);
+        var modDiv = document.createElement('div'); modDiv.style.cssText = 'font-size:0.78rem; color:var(--grigio); margin-top:0.1rem;'; modDiv.textContent = p.modalita || '';
+        if (p.meetLink) { var a=document.createElement('a'); a.href=p.meetLink; a.target='_blank'; a.style.cssText='color:var(--verde); margin-left:0.5rem;'; a.textContent='Meet'; modDiv.appendChild(a); }
         left.appendChild(modDiv);
 
-        // Pulsante cancella (solo se non già cancellato) - dentro left, prima di appendere
         if (p.stato !== 'CANCELLATO') {
           var btnCanc = document.createElement('button');
           btnCanc.textContent = 'Cancella';
           btnCanc.style.cssText = 'margin-top:0.5rem; padding:0.3rem 0.8rem; background:none; border:1.5px solid #e8bdb9; border-radius:5px; color:var(--rosso); font-family:Raleway,sans-serif; font-size:0.73rem; font-weight:600; cursor:pointer; display:block;';
           btnCanc.onmouseover = function() { this.style.background='var(--rosso)'; this.style.color='white'; };
           btnCanc.onmouseout  = function() { this.style.background='none'; this.style.color='var(--rosso)'; };
-          (function(eid, nome, dataPren) {
-            btnCanc.onclick = function() { cancella(eid, nome, dataPren); };
-          })(p.eventId, p.richiedente, p.data);
+          (function(eid, nome, dataPren) { btnCanc.onclick = function() { cancella(eid, nome, dataPren); }; })(p.eventId, p.richiedente, p.data);
           left.appendChild(btnCanc);
         }
 
         div.appendChild(left);
-
-        // Stato badge (colonna destra)
         var badge = document.createElement('span');
         badge.style.cssText = 'font-size:0.72rem; font-weight:600; padding:0.25rem 0.6rem; border-radius:20px; white-space:nowrap; background:' + statoBg + '; color:' + statoColor + ';';
         badge.textContent = statoTesto;
         div.appendChild(badge);
-
         lista.appendChild(div);
       });
 
-      // Remove border from last
       var items = lista.querySelectorAll('div[style*="border-bottom"]');
       if (items.length > 0) items[items.length-1].style.borderBottom = 'none';
     })
-    .catch(function() {
-      lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.85rem;">Errore nel caricamento.</div>';
-    });
+    .catch(function() { lista.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--rosso);font-size:0.85rem;">Errore nel caricamento.</div>'; });
 }
 
 // ============================================================
-// CANCELLA PRENOTAZIONE (admin)
+// CANCELLA PRENOTAZIONE
 // ============================================================
 function cancellaMia(eventId, nome, dataPren) {
   if (!confirm('Cancellare la prenotazione per ' + nome + ' del ' + dataPren + '?')) return;
   fetch(SCRIPT_URL + '?action=cancellaPrenotazione&eventId=' + encodeURIComponent(eventId))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.ok) {
-        caricaMiePrenotazioni();
-      } else {
-        alert('Errore: ' + (data.error || 'impossibile cancellare.'));
-      }
+      if (data.ok) caricaMiePrenotazioni();
+      else alert('Errore: ' + (data.error || 'impossibile cancellare.'));
     })
     .catch(function() { alert('Errore di connessione.'); });
 }
 
 function cancella(eventId, nome, dataPren) {
   if (!confirm('Cancellare la prenotazione di ' + nome + ' del ' + dataPren + '?\nVerra inviata email alla parte.')) return;
-
   fetch(SCRIPT_URL + '?action=cancellaPrenotazione&eventId=' + encodeURIComponent(eventId))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (data.ok) {
-        alert('Prenotazione cancellata. Email inviata a ' + data.nome + '.');
-        caricaTuttePrenotazioni();
-      } else {
-        alert('Errore: ' + (data.error || 'impossibile cancellare.'));
-      }
+      if (data.ok) { alert('Prenotazione cancellata. Email inviata a ' + data.nome + '.'); caricaTuttePrenotazioni(); }
+      else alert('Errore: ' + (data.error || 'impossibile cancellare.'));
     })
-    .catch(function() {
-      alert('Errore di connessione.');
-    });
+    .catch(function() { alert('Errore di connessione.'); });
 }
-
-// ============================================================
-// IMPOSTAZIONI EMAIL ACCOUNT
-// ============================================================
-
-
-
-
-
 
 // ============================================================
 // ROUTING MEDIATORE
 // ============================================================
 function showMediatore() {
-  ['login-screen','firstlogin-screen','admin-screen','app-screen'].forEach(function(id){
-    document.getElementById(id).style.display='none';
-  });
+  ['login-screen','firstlogin-screen','admin-screen','app-screen'].forEach(function(id){ document.getElementById(id).style.display='none'; });
   document.getElementById('mediatore-screen').style.display='block';
   document.getElementById('med-topbar-username').textContent = currentUser.username;
   showMedTab('prenotazioni');
   caricaPrenotazioniMediatore();
 }
-function entraMedPanel() {
-  showMediatore();
-  var b=document.getElementById('med-btn-back-admin');
-  if(b && currentUser.role==='admin') b.style.display='inline-block';
-}
-function tornaAdmin() {
-  document.getElementById('mediatore-screen').style.display='none';
-  showAdmin();
-}
+function entraMedPanel() { showMediatore(); var b=document.getElementById('med-btn-back-admin'); if(b && currentUser.role==='admin') b.style.display='inline-block'; }
+function tornaAdmin() { document.getElementById('mediatore-screen').style.display='none'; showAdmin(); }
 function showMedTab(tab) {
   ['prenotazioni','prenota','utenti','sedi','config','pwd'].forEach(function(t){
     var el=document.getElementById('med-tab-'+t); if(el) el.style.display=tab===t?'block':'none';
@@ -2871,17 +2536,9 @@ function showMedTab(tab) {
   if(tab==='prenota'){ window._medPrenotaSlotsLoaded=false; caricaSlotsPerMediatore(); }
   if(tab==='utenti') caricaMieiUtenti();
 }
-// Login routing
-var _origSetSession = typeof setSession === 'function' ? setSession : null;
-function routeAfterLogin(user, remember) {
-  setSession(user, remember);
-  if(user.role==='admin') showAdmin();
-  else if(user.role==='mediatore') showMediatore();
-  else goToApp();
-}
 
 // ============================================================
-// LE MIE PRENOTAZIONI (mediatore)
+// PRENOTAZIONI MEDIATORE
 // ============================================================
 function caricaPrenotazioniMediatore() {
   var lista=document.getElementById('med-vedi-lista');
@@ -2894,9 +2551,7 @@ function caricaPrenotazioniMediatore() {
     .then(function(r){return r.json();})
     .then(function(data){
       lista.innerHTML='';
-      var pren=(data.prenotazioni||[]).filter(function(p){
-        return !p.mediatore||p.mediatore===''||p.mediatore.toLowerCase()===currentUser.username.toLowerCase();
-      });
+      var pren=(data.prenotazioni||[]).filter(function(p){ return !p.mediatore||p.mediatore===''||p.mediatore.toLowerCase()===currentUser.username.toLowerCase(); });
       if(pren.length===0){lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Nessuna prenotazione trovata.</div>';return;}
       count.textContent=pren.length+' prenotazion'+(pren.length!==1?'i':'e');
       pren.forEach(function(p){
@@ -2910,16 +2565,13 @@ function caricaPrenotazioniMediatore() {
         var d2=document.createElement('div');d2.style.cssText='font-size:0.82rem;color:var(--testo);margin-bottom:0.15rem;';d2.textContent=(p.parte||p.richiedente||'')+(p.rg?' \u00b7 R.G. '+p.rg:'');left.appendChild(d2);
         var d3=document.createElement('div');d3.style.cssText='font-size:0.78rem;color:var(--grigio);';d3.textContent=(p.email||'')+' \u00b7 '+(p.modalita||'');left.appendChild(d3);
         if(p.stato!=='CANCELLATO'){
-          var btnC=document.createElement('button');
-          btnC.textContent='Cancella';
+          var btnC=document.createElement('button');btnC.textContent='Cancella';
           btnC.style.cssText='margin-top:0.4rem;font-size:0.7rem;padding:0.25rem 0.65rem;background:none;border:1.5px solid #e8bdb9;border-radius:5px;color:var(--rosso);cursor:pointer;font-family:Raleway,sans-serif;font-weight:600;';
           (function(eid,nome){btnC.onclick=function(){if(!confirm('Cancellare la prenotazione di '+nome+'?'))return;fetch(SCRIPT_URL+'?action=cancellaPrenotazione&eventId='+encodeURIComponent(eid)).then(function(r){return r.json();}).then(function(d){if(d.ok)caricaPrenotazioniMediatore();else alert(d.error||'Errore.');});};})(p.eventId,p.richiedente);
           left.appendChild(btnC);
         }
         div.appendChild(left);
-        var badge=document.createElement('span');
-        badge.style.cssText='font-size:0.72rem;font-weight:600;padding:0.25rem 0.6rem;border-radius:20px;white-space:nowrap;background:'+sb+';color:'+sc+';';
-        badge.textContent=st;div.appendChild(badge);lista.appendChild(div);
+        var badge=document.createElement('span');badge.style.cssText='font-size:0.72rem;font-weight:600;padding:0.25rem 0.6rem;border-radius:20px;white-space:nowrap;background:'+sb+';color:'+sc+';';badge.textContent=st;div.appendChild(badge);lista.appendChild(div);
       });
     })
     .catch(function(){lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--rosso);">Errore nel caricamento.</div>';});
@@ -3000,8 +2652,7 @@ function caricaMieiUtenti(){
       miei.forEach(function(u){
         var tr=document.createElement('tr');tr.style.borderBottom='1px solid var(--bordo)';
         var td1=document.createElement('td');td1.style.padding='0.5rem 0.3rem';td1.innerHTML='<strong>'+u.username+'</strong>';
-        var td2=document.createElement('td');td2.style.padding='0.5rem 0.3rem';
-        td2.innerHTML=u.hasPassword?'<span style="color:var(--verde);font-size:0.75rem;">\u2713 Impostata</span>':'<span style="color:var(--arancio);font-size:0.75rem;">\u23f3 Primo accesso</span>';
+        var td2=document.createElement('td');td2.style.padding='0.5rem 0.3rem';td2.innerHTML=u.hasPassword?'<span style="color:var(--verde);font-size:0.75rem;">\u2713 Impostata</span>':'<span style="color:var(--arancio);font-size:0.75rem;">\u23f3 Primo accesso</span>';
         var td3=document.createElement('td');td3.style.padding='0.5rem 0.3rem';
         if(u.hasPassword){var btnR=document.createElement('button');btnR.textContent='Reset pwd';btnR.style.cssText='font-size:0.72rem;padding:0.2rem 0.6rem;background:none;border:1.5px solid #d4a017;border-radius:5px;color:#a07800;cursor:pointer;margin-right:0.3rem;font-family:Raleway,sans-serif;';(function(n){btnR.onclick=function(){medResetUser(n);};})(u.username);td3.appendChild(btnR);}
         var btnD=document.createElement('button');btnD.textContent='Elimina';btnD.style.cssText='font-size:0.72rem;padding:0.2rem 0.6rem;background:none;border:1.5px solid #e8bdb9;border-radius:5px;color:var(--rosso);cursor:pointer;font-family:Raleway,sans-serif;';(function(n){btnD.onclick=function(){medDeleteUser(n);};})(u.username);td3.appendChild(btnD);
@@ -3020,7 +2671,7 @@ function medDeleteUser(username){if(!confirm('Eliminare "'+username+'"?'))return
 function medResetUser(username){if(!confirm('Azzerare la password di "'+username+'"?'))return;fetch(SCRIPT_URL+'?action=resetUser&username='+encodeURIComponent(username)).then(function(r){return r.json();}).then(function(){caricaMieiUtenti();});}
 
 // ============================================================
-// LE MIE SEDI (responsabile sede)
+// LE MIE SEDI (mediatore)
 // ============================================================
 function caricaMieSedi(){
   var lista=document.getElementById('med-sedi-lista');
@@ -3189,7 +2840,7 @@ function aggiornaSlotAdmin(){
 }
 
 // ============================================================
-// showAdminTab aggiornato + impostazioni email
+// showAdminTab + impostazioni email
 // ============================================================
 function showAdminTab(tab) {
   var tabs = ['users','pwd','prenota','config','vedi','mediatori'];
@@ -3210,32 +2861,22 @@ async function salvaImpostazioniEmail(){
   if(!email||!email.includes('@')){showMsg(msg,'\u26a0 Email non valida.','error');return;}
   try{var resp=await fetch(SCRIPT_URL+'?action=setEmailAccount&username='+encodeURIComponent(currentUser.username)+'&email='+encodeURIComponent(email));var data=await resp.json();if(data.ok){currentUser.emailAccount=email;setSession(currentUser,!!localStorage.getItem('mediazione_session_remember'));showMsg(msg,'\u2713 Salvata.','success');setTimeout(chiudiImpostazioniEmail,1000);var banner=document.getElementById('email-missing-alert');if(banner)banner.style.display='none';}else showMsg(msg,'\u26a0 '+(data.error||'Errore.'),'error');}catch(e){showMsg(msg,'\u26a0 Errore.','error');}
 }
+
 // ============================================================
 // AVVIO
 // ============================================================
 window.onload = async function() {
-  // Controlla se c'e' gia una sessione attiva
   const session = getSession();
   if (session) {
     currentUser = session;
-    if (session.role === 'admin') {
-      showAdmin();
-    } else if (session.role === 'mediatore') {
-      showMediatore();
-    } else {
-      goToApp();
-    }
+    if (session.role === 'admin') showAdmin();
+    else if (session.role === 'mediatore') showMediatore();
+    else goToApp();
   } else {
     document.getElementById('login-screen').style.display = 'flex';
   }
-
-  // Permetti login con INVIO
-  document.getElementById('login-password').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') doLogin();
-  });
-  document.getElementById('login-username').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('login-password').focus();
-  });
+  document.getElementById('login-password').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('login-username').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('login-password').focus(); });
 };
 </script>
 
@@ -3244,20 +2885,19 @@ window.onload = async function() {
   <div style="background:white; border-radius:14px; padding:2rem; width:100%; max-width:400px; box-shadow:0 20px 50px rgba(0,0,0,0.25); animation:fadeUp 0.3s ease;">
     <h3 style="font-family:Lora,serif; font-size:1.2rem; font-weight:400; color:var(--blu); margin-bottom:0.5rem;">Impostazioni account</h3>
     <p style="font-size:0.82rem; color:var(--grigio); line-height:1.65; margin-bottom:1.5rem;">
-      La tua email di account riceve in copia <strong>tutte</strong> le comunicazioni — anche quando nel form di prenotazione indichi un'altra email.
+      La tua email di account riceve in copia <strong>tutte</strong> le comunicazioni.
     </p>
     <div class="login-input-group">
       <label>Email account</label>
       <input type="email" id="impostazioni-email" placeholder="studio@esempio.it" />
     </div>
     <div style="display:flex; gap:0.8rem; margin-top:0.8rem;">
-      <button onclick="salvaImpostazioniEmail()" style="flex:1; padding:0.8rem; background:linear-gradient(135deg,var(--blu),var(--azzurro)); color:white; border:none; border-radius:7px; font-family:Raleway,sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer;">Salva</button>
-      <button onclick="chiudiImpostazioniEmail()" style="padding:0.8rem 1.2rem; background:none; border:1.5px solid var(--bordo); border-radius:7px; font-family:Raleway,sans-serif; font-size:0.82rem; color:var(--grigio); cursor:pointer;">Annulla</button>
+      <button onclick="salvaImpostazioniEmail()" style="flex:1; padding:0.8rem; background:linear-gradient(135deg,var(--blu),var(--azzurro)); color:white; border:none; border-radius:7px; font-family:'Raleway',sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer;">Salva</button>
+      <button onclick="chiudiImpostazioniEmail()" style="padding:0.8rem 1.2rem; background:none; border:1.5px solid var(--bordo); border-radius:7px; font-family:'Raleway',sans-serif; font-size:0.82rem; color:var(--grigio); cursor:pointer;">Annulla</button>
     </div>
     <div id="impostazioni-msg" style="margin-top:0.8rem; font-size:0.8rem; padding:0.6rem 0.9rem; border-radius:6px; display:none;"></div>
   </div>
 </div>
-
 
 <!-- ===== PANNELLO MEDIATORE ===== -->
 <div id="mediatore-screen" style="display:none; min-height:100vh; background:var(--bianco);">
@@ -3278,7 +2918,6 @@ window.onload = async function() {
   </div>
   <div style="max-width:860px; margin:0 auto; padding:2rem 1.5rem;">
 
-    <!-- Tab prenotazioni -->
     <div id="med-tab-prenotazioni">
       <div class="admin-card">
         <h3>&#128203; Le mie prenotazioni</h3>
@@ -3297,7 +2936,6 @@ window.onload = async function() {
       </div>
     </div>
 
-    <!-- Tab prenota per parte -->
     <div id="med-tab-prenota" style="display:none">
       <div id="med-prenota-step-slot">
         <div class="admin-card">
@@ -3341,7 +2979,6 @@ window.onload = async function() {
       </div>
     </div>
 
-    <!-- Tab I miei utenti -->
     <div id="med-tab-utenti" style="display:none">
       <div class="admin-card">
         <h3>&#128101; I miei utenti</h3>
@@ -3362,16 +2999,14 @@ window.onload = async function() {
       </div>
     </div>
 
-    <!-- Tab Le mie sedi -->
     <div id="med-tab-sedi" style="display:none">
       <div class="admin-card">
         <h3>&#128205; Le mie sedi</h3>
-        <p style="font-size:0.82rem;color:var(--grigio);margin-bottom:1.2rem;line-height:1.6;">Giorni e orari di apertura delle sedi di cui sei responsabile. Gli slot finali sono intersezione tra la tua agenda e la disponibilita della sede.</p>
+        <p style="font-size:0.82rem;color:var(--grigio);margin-bottom:1.2rem;line-height:1.6;">Giorni e orari di apertura delle sedi di cui sei responsabile.</p>
         <div id="med-sedi-lista"><div style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div></div>
       </div>
     </div>
 
-    <!-- Tab La mia configurazione -->
     <div id="med-tab-config" style="display:none">
       <div class="admin-card">
         <h3>&#9881; La mia configurazione</h3>
@@ -3397,7 +3032,6 @@ window.onload = async function() {
       </div>
     </div>
 
-    <!-- Tab Password -->
     <div id="med-tab-pwd" style="display:none">
       <div class="admin-card">
         <h3>&#128273; Cambia password</h3>
@@ -3413,25 +3047,23 @@ window.onload = async function() {
   </div>
 </div>
 
-<!-- Tab Mediatori (admin) -->
+<!-- Tab Mediatori e altri tab admin (iniettati via JS) -->
 <script>
-// Inject admin tabs HTML
 document.addEventListener('DOMContentLoaded', function() {
   var pwdTab = document.getElementById('admin-tab-pwd');
   if (!pwdTab) return;
+
   var medAdminTab = document.createElement('div');
   medAdminTab.id = 'admin-tab-mediatori';
   medAdminTab.style.display = 'none';
   medAdminTab.innerHTML = '<div class="admin-card"><h3>&#9878; Mediatori</h3><div id="mediatori-lista" style="margin-bottom:1.5rem;"><div style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div></div><div style="border-top:1.5px solid var(--bordo);padding-top:1.2rem;"><h4 id="mediatori-form-title" style="font-size:0.88rem;font-weight:600;color:var(--blu);margin-bottom:1rem;">+ Aggiungi mediatore</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;"><div class="input-group" style="margin-bottom:0;"><label>Username</label><input type="text" id="med-username" placeholder="Es. rossi.m" /></div><div class="input-group" style="margin-bottom:0;"><label>Nome completo</label><input type="text" id="med-nome" /></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;"><div class="input-group" style="margin-bottom:0;"><label>Email avvisi</label><input type="email" id="med-email" /></div><div class="input-group" style="margin-bottom:0;"><label>Sedi (virgola)</label><input type="text" id="med-sedi" /></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;"><div class="input-group" style="margin-bottom:0;"><label>Giorni</label><input type="text" id="med-giorni" value="1,2,3,4" /></div><div class="input-group" style="margin-bottom:0;"><label>Orari</label><input type="text" id="med-orari" value="9,11,15,17" /></div><div class="input-group" style="margin-bottom:0;"><label>Min</label><input type="number" id="med-daysmin" value="22" /></div><div class="input-group" style="margin-bottom:0;"><label>Max</label><input type="number" id="med-daysmax" value="40" /></div></div><label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;text-transform:none;letter-spacing:0;font-weight:500;color:var(--testo);margin-bottom:1rem;"><input type="checkbox" id="med-online" style="accent-color:var(--verde);width:16px;height:16px;" /> Disponibile per sedute telematiche</label><div style="display:flex;gap:0.8rem;"><button class="btn-add" id="med-save-btn" onclick="salvaMediatore()" style="max-width:180px;">Salva mediatore</button><button id="med-cancel-btn" onclick="annullaEditMediatore()" style="display:none;padding:0.7rem 1.2rem;background:none;border:1.5px solid var(--bordo);border-radius:7px;font-family:Raleway,sans-serif;font-size:0.82rem;color:var(--grigio);cursor:pointer;">Annulla</button></div><div id="med-msg" style="margin-top:0.8rem;font-size:0.82rem;padding:0.6rem 1rem;border-radius:6px;display:none;"></div></div></div>';
   pwdTab.parentNode.insertBefore(medAdminTab, pwdTab);
 
-  // Admin config tab (simplified)
   var cfgTab = document.getElementById('admin-tab-config');
   if (cfgTab) {
     cfgTab.innerHTML = '<div class="admin-card"><h3>&#9881; Configurazione globale app</h3><p style="font-size:0.82rem;color:var(--grigio);margin-bottom:1.5rem;line-height:1.6;">Impostazioni generali. Le configurazioni di ogni mediatore si trovano nel tab &#9878; Mediatori.</p><div id="config-loading" style="text-align:center;padding:1.5rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div><div id="config-form" style="display:none;"><div style="margin-bottom:1.8rem;"><p style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--azzurro);font-weight:600;margin-bottom:1rem;border-bottom:2px solid var(--cielo);padding-bottom:0.5rem;">&#128187; Interfaccia app</p><div class="input-group"><label>Titolo header</label><input type="text" id="cfg-titolo-app" /></div><div class="input-group"><label>Sottotitolo header</label><input type="text" id="cfg-sottotitolo-app" /></div></div><div style="margin-bottom:1.8rem;"><p style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--azzurro);font-weight:600;margin-bottom:1rem;border-bottom:2px solid var(--cielo);padding-bottom:0.5rem;">&#128231; Email e Drive</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;"><div class="input-group"><label>Email CC globale</label><input type="email" id="cfg-email-cc" /></div><div class="input-group"><label>Cartella Google Drive</label><input type="text" id="cfg-drive-root" /></div></div></div><button class="btn-add" id="cfg-save-btn" onclick="saveConfig()" style="width:100%;padding:0.9rem;">Salva configurazione</button><div id="cfg-msg" style="margin-top:0.8rem;font-size:0.82rem;padding:0.7rem 1rem;border-radius:6px;display:none;"></div></div></div>';
   }
 
-  // Admin prenota - add mediatore/sede selectors
   var prenotaTab = document.getElementById('admin-tab-prenota');
   if (prenotaTab) {
     var selectorDiv = document.createElement('div');
