@@ -1420,6 +1420,19 @@
   </div>
 </div>
 
+<div id="voto-rinvio-modal" style="display:none; position:fixed; inset:0; background:rgba(26,74,122,0.6); z-index:9999; align-items:center; justify-content:center; padding:1.5rem;">
+  <div style="background:white; border-radius:14px; padding:2rem; width:100%; max-width:450px; box-shadow:0 20px 50px rgba(0,0,0,0.25); animation: fadeUp 0.3s ease;">
+    <h3 style="font-family:'Lora',serif; font-size:1.3rem; color:var(--blu); margin-bottom:0.5rem;">Azione Richiesta: Scegli la data</h3>
+    <p style="font-size:0.85rem; color:var(--grigio); line-height:1.6; margin-bottom:1.5rem;">
+      Il mediatore ha proposto delle nuove date per la procedura <strong id="voto-rinvio-rg" style="color:var(--testo);"></strong>.<br>
+      Seleziona la tua disponibilità. L'incontro sarà confermato in agenda solo quando tutte le parti sceglieranno la stessa data.
+    </p>
+    <div id="voto-rinvio-opzioni" style="display:flex; flex-direction:column; gap:0.8rem; margin-bottom:1.5rem;">
+      </div>
+    <div id="voto-rinvio-msg" style="font-size:0.82rem; padding:0.6rem; border-radius:6px; display:none; margin-bottom:1rem;"></div>
+    <button onclick="document.getElementById('voto-rinvio-modal').style.display='none';" style="width:100%; padding:0.8rem; background:none; border:1.5px solid var(--bordo); border-radius:7px; font-weight:600; color:var(--grigio); cursor:pointer; font-family:'Raleway',sans-serif;">Deciderò più tardi</button>
+  </div>
+</div>
 <script>
 // ============================================================
 // CONFIGURAZIONE
@@ -1599,6 +1612,7 @@ function goToApp() {
   window._mediatoreSelezionato = '';
   window._sedeSelezionata = '';
   inizializzaSedeMediatore();
+  controllaVotiPendenti();
 }
 
 // showAdminTab — see updated version below
@@ -2862,7 +2876,7 @@ function tornaAdmin() {
   showAdmin();
 }
 function showMedTab(tab) {
-  ['prenotazioni','prenota','utenti','sedi','config','pwd'].forEach(function(t){
+  ['prenotazioni','prenota','utenti','sedi','config','pwd','rinvii'].forEach(function(t){
     var el=document.getElementById('med-tab-'+t); if(el) el.style.display=tab===t?'block':'none';
     var btn=document.getElementById('med-tab-btn-'+t); if(btn) btn.classList.toggle('active',tab===t);
   });
@@ -3211,6 +3225,167 @@ async function salvaImpostazioniEmail(){
   try{var resp=await fetch(SCRIPT_URL+'?action=setEmailAccount&username='+encodeURIComponent(currentUser.username)+'&email='+encodeURIComponent(email));var data=await resp.json();if(data.ok){currentUser.emailAccount=email;setSession(currentUser,!!localStorage.getItem('mediazione_session_remember'));showMsg(msg,'\u2713 Salvata.','success');setTimeout(chiudiImpostazioniEmail,1000);var banner=document.getElementById('email-missing-alert');if(banner)banner.style.display='none';}else showMsg(msg,'\u26a0 '+(data.error||'Errore.'),'error');}catch(e){showMsg(msg,'\u26a0 Errore.','error');}
 }
 // ============================================================
+// SONDAGGIO RINVIO / NUOVO INCONTRO
+// ============================================================
+let slotRinvioSelezionati = [];
+let idPropostaAttiva = null;
+
+function caricaSlotRinvio() {
+  const min = document.getElementById('rinvio-min').value;
+  const max = document.getElementById('rinvio-max').value;
+  const container = document.getElementById('rinvio-slots-container');
+  
+  container.innerHTML = '<div class="spinner" style="width:24px;height:24px;margin:0 auto;"></div><p style="text-align:center;font-size:0.8rem;color:var(--grigio);">Ricerca slot liberi in agenda...</p>';
+  container.style.display = 'block';
+  slotRinvioSelezionati = [];
+  document.getElementById('btn-invia-rinvio').style.display = 'none';
+
+  fetch(SCRIPT_URL + '?action=getSlotsRinvio&username=' + encodeURIComponent(currentUser.username) + '&min=' + min + '&max=' + max)
+    .then(r => r.json())
+    .then(data => {
+      container.innerHTML = '';
+      if (!data.ok || !data.slots || data.slots.length === 0) {
+        container.innerHTML = '<p style="color:var(--grigio); text-align:center;">Nessuno slot trovato in questo intervallo.</p>';
+        return;
+      }
+      data.slots.forEach(slot => {
+        let div = document.createElement('div');
+        div.style.cssText = 'padding:0.7rem; border:1px solid var(--bordo); border-radius:6px; margin-bottom:0.5rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s;';
+        div.textContent = slot.display;
+        div.onclick = function() {
+          if (slotRinvioSelezionati.includes(slot.start)) {
+            slotRinvioSelezionati = slotRinvioSelezionati.filter(s => s !== slot.start);
+            div.style.background = 'white'; 
+            div.style.color = 'var(--testo)';
+            div.style.borderColor = 'var(--bordo)';
+          } else {
+            slotRinvioSelezionati.push(slot.start);
+            div.style.background = 'var(--azzurro)'; 
+            div.style.color = 'white';
+            div.style.borderColor = 'var(--azzurro)';
+          }
+          document.getElementById('btn-invia-rinvio').style.display = slotRinvioSelezionati.length > 0 ? 'block' : 'none';
+        };
+        container.appendChild(div);
+      });
+    })
+    .catch(err => {
+        container.innerHTML = '<p style="color:var(--rosso); text-align:center;">Errore di connessione.</p>';
+    });
+}
+
+function inviaPropostaRinvio() {
+  const rg = document.getElementById('rinvio-rg').value.trim().toUpperCase();
+  const email = document.getElementById('rinvio-email').value.trim();
+  const status = document.getElementById('rinvio-status');
+  status.style.display = 'none';
+  
+  if (!rg || !email) { 
+    showMsg(status, '⚠ R.G. ed email (o username) sono obbligatori.', 'error'); 
+    return; 
+  }
+  
+  const btn = document.getElementById('btn-invia-rinvio');
+  btn.disabled = true; 
+  btn.textContent = 'Invio in corso...';
+  
+  const dateStr = slotRinvioSelezionati.join('|');
+  const url = SCRIPT_URL + '?action=lanciaPropostaRinvio&rg=' + encodeURIComponent(rg) + '&email=' + encodeURIComponent(email) + '&date=' + encodeURIComponent(dateStr) + '&username=' + encodeURIComponent(currentUser.username) + '&idEv=NUOVO';
+
+  fetch(url).then(r => r.json()).then(data => {
+    btn.disabled = false; 
+    btn.textContent = 'Invia Proposta alle Parti';
+    if(data.ok) {
+      showMsg(status, '✓ Proposta inviata! Le opzioni sono state bloccate temporaneamente sul calendario.', 'success');
+      document.getElementById('rinvio-rg').value = '';
+      document.getElementById('rinvio-email').value = '';
+      document.getElementById('rinvio-slots-container').innerHTML = '';
+      document.getElementById('rinvio-slots-container').style.display = 'none';
+      slotRinvioSelezionati = [];
+      btn.style.display = 'none';
+    } else {
+      showMsg(status, '⚠ ' + (data.error || 'Errore durante l\'invio.'), 'error');
+    }
+  }).catch(err => {
+      btn.disabled = false; 
+      btn.textContent = 'Invia Proposta alle Parti';
+      showMsg(status, '⚠ Errore di connessione.', 'error');
+  });
+}
+
+function controllaVotiPendenti() {
+  if (!currentUser || currentUser.role !== 'user') return;
+  
+  fetch(SCRIPT_URL + '?action=verificaRinvio&username=' + encodeURIComponent(currentUser.username))
+    .then(r => r.json())
+    .then(data => {
+      if (data.haProposte) {
+        document.getElementById('voto-rinvio-modal').style.display = 'flex';
+        document.getElementById('voto-rinvio-rg').textContent = data.rg;
+        idPropostaAttiva = data.id;
+        
+        const contenitore = document.getElementById('voto-rinvio-opzioni');
+        contenitore.innerHTML = '';
+        
+        const giorni = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+        const mesi = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+        
+        data.date.forEach(dISO => {
+          const d = new Date(dISO);
+          const dEnd = new Date(d.getTime() + 2*3600*1000);
+          const dateDisplay = giorni[d.getDay()] + ' ' + d.getDate() + ' ' + mesi[d.getMonth()] + ' ' + d.getFullYear() + ' - ore ' + String(d.getHours()).padStart(2,'0') + ':00-' + String(dEnd.getHours()).padStart(2,'0') + ':00';
+          
+          let btn = document.createElement('button');
+          btn.textContent = dateDisplay;
+          btn.style.cssText = 'padding:0.9rem; background:var(--cielo); border:1px solid var(--azzurro); border-radius:6px; cursor:pointer; font-weight:600; color:var(--blu); font-family:"Raleway",sans-serif; transition:all 0.2s;';
+          btn.onmouseover = function() { this.style.background = 'var(--azzurro)'; this.style.color = 'white'; };
+          btn.onmouseout = function() { this.style.background = 'var(--cielo)'; this.style.color = 'var(--blu)'; };
+          btn.onclick = function() { inviaVotoRinvio(dISO, btn); };
+          contenitore.appendChild(btn);
+        });
+      }
+    })
+    .catch(e => console.log('Errore verifica rinvio:', e));
+}
+
+function inviaVotoRinvio(dataScelta, btnElement) {
+  btnElement.textContent = 'Registrazione in corso...';
+  btnElement.style.pointerEvents = 'none';
+  
+  const container = document.getElementById('voto-rinvio-opzioni');
+  Array.from(container.children).forEach(child => child.style.pointerEvents = 'none');
+
+  fetch(SCRIPT_URL + '?action=registraVoto&id=' + encodeURIComponent(idPropostaAttiva) + '&dataScelta=' + encodeURIComponent(dataScelta) + '&username=' + encodeURIComponent(currentUser.username))
+    .then(r => r.json())
+    .then(res => {
+      let msg = document.getElementById('voto-rinvio-msg');
+      msg.style.display = 'block';
+      if (res.ok) {
+          msg.style.background = '#d5f5e3'; 
+          msg.style.color = 'var(--verde)';
+          msg.innerHTML = res.match ? '<strong>✓ Tutti d\'accordo!</strong> L\'incontro è stato confermato in agenda.' : '<strong>✓ Voto registrato.</strong> In attesa delle altre parti.';
+          setTimeout(() => { document.getElementById('voto-rinvio-modal').style.display = 'none'; }, 4000);
+      } else {
+          msg.style.background = '#fdecea'; 
+          msg.style.color = 'var(--rosso)';
+          msg.textContent = '⚠ Errore: ' + res.error;
+          btnElement.textContent = 'Riprova';
+          btnElement.style.pointerEvents = 'auto';
+          Array.from(container.children).forEach(child => child.style.pointerEvents = 'auto');
+      }
+    })
+    .catch(err => {
+        let msg = document.getElementById('voto-rinvio-msg');
+        msg.style.display = 'block';
+        msg.style.background = '#fdecea'; 
+        msg.style.color = 'var(--rosso)';
+        msg.textContent = '⚠ Errore di connessione.';
+        btnElement.textContent = 'Riprova';
+        btnElement.style.pointerEvents = 'auto';
+        Array.from(container.children).forEach(child => child.style.pointerEvents = 'auto');
+    });
+}
+// ============================================================
 // AVVIO
 // ============================================================
 window.onload = async function() {
@@ -3275,6 +3450,7 @@ window.onload = async function() {
     <button class="btn-admin-nav" id="med-tab-btn-sedi" onclick="showMedTab('sedi')">&#128205; Le mie sedi</button>
     <button class="btn-admin-nav" id="med-tab-btn-config" onclick="showMedTab('config')">&#9881; La mia configurazione</button>
     <button class="btn-admin-nav" id="med-tab-btn-pwd" onclick="showMedTab('pwd')">&#128273; Password</button>
+    <button class="btn-admin-nav" id="med-tab-btn-rinvii" onclick="showMedTab('rinvii')">&#128197; Sondaggio Date</button>
   </div>
   <div style="max-width:860px; margin:0 auto; padding:2rem 1.5rem;">
 
@@ -3397,6 +3573,38 @@ window.onload = async function() {
       </div>
     </div>
 
+    <div id="med-tab-rinvii" style="display:none">
+      <div class="admin-card">
+        <h3>&#128197; Proponi Date Incontro / Rinvio</h3>
+        <p style="font-size:0.82rem;color:var(--grigio);margin-bottom:1.2rem;">Ricerca slot liberi nella tua agenda e invia un sondaggio date alle parti. Crea l'appuntamento solo quando tutti concordano.</p>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:0.5rem;">
+          <div class="input-group">
+            <label>R.G. Procedura</label>
+            <input type="text" id="rinvio-rg" placeholder="Es. 123/26" style="text-transform:uppercase;">
+          </div>
+          <div class="input-group">
+            <label>Username o Email Invitati (virgola)</label>
+            <input type="text" id="rinvio-email" placeholder="avv1, mario.rossi">
+          </div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:1rem; align-items:end; margin-bottom:1.5rem;">
+          <div class="input-group" style="margin-bottom:0;">
+            <label>Giorni Minimi</label><input type="number" id="rinvio-min" value="10">
+          </div>
+          <div class="input-group" style="margin-bottom:0;">
+            <label>Giorni Massimi</label><input type="number" id="rinvio-max" value="40">
+          </div>
+          <button class="btn-add" onclick="caricaSlotRinvio()" style="padding:0.75rem 1.2rem;">Cerca Slot</button>
+        </div>
+
+        <div id="rinvio-slots-container" style="display:none; max-height:220px; overflow-y:auto; border:1px solid var(--bordo); padding:1rem; border-radius:8px; margin-bottom:1rem;"></div>
+        
+        <button class="btn-add" id="btn-invia-rinvio" onclick="inviaPropostaRinvio()" style="display:none; width:100%; padding:0.9rem;">Invia Proposta alle Parti</button>
+        <div id="rinvio-status" style="margin-top:0.8rem;font-size:0.82rem;padding:0.7rem 1rem;border-radius:6px;display:none;"></div>
+      </div>
+    </div>
     <!-- Tab Password -->
     <div id="med-tab-pwd" style="display:none">
       <div class="admin-card">
