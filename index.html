@@ -1071,9 +1071,19 @@ function inviaPropostaRinvioModal() {
             </select>
           </div>
           <div>
-            <button class="btn-add" onclick="addUser()">+ Aggiungi</button>
-          </div>
+           <button class="btn-add" id="btn-invia-rinvio" onclick="inviaPropostaRinvio()" style="display:none; width:100%; padding:0.9rem;">Invia Proposta alle Parti</button>
+        <div id="rinvio-status" style="margin-top:0.8rem;font-size:0.82rem;padding:0.7rem 1rem;border-radius:6px;display:none;"></div>
+        
+        <hr style="border:0; border-top:1px solid var(--bordo); margin: 2rem 0 1.5rem 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <h3 style="margin-bottom:0; font-size:1.1rem; color:var(--blu);">📊 Riepilogo Sondaggi Inviati</h3>
+          <button onclick="caricaListaProposte()" style="padding:0.4rem 0.8rem; background:none; border:1.5px solid var(--bordo); border-radius:5px; cursor:pointer; color:var(--grigio); font-size:0.75rem; font-family:'Raleway',sans-serif; font-weight:600; transition:all 0.2s;" onmouseover="this.style.borderColor='var(--azzurro)'; this.style.color='var(--azzurro)';" onmouseout="this.style.borderColor='var(--bordo)'; this.style.color='var(--grigio)';">🔄 Aggiorna</button>
         </div>
+        <div id="med-lista-proposte">
+           <p style="font-size:0.85rem; color:var(--grigio); text-align:center;">Caricamento...</p>
+        </div>
+        </div>
+    </div>
         <div id="add-user-msg"></div>
       </div>
 
