@@ -3248,10 +3248,14 @@ function caricaSlotRinvio() {
         container.innerHTML = '<p style="color:var(--grigio); text-align:center;">Nessuno slot trovato in questo intervallo.</p>';
         return;
       }
+      
+      container.innerHTML = '<p style="font-size:0.8rem; font-weight:600; color:var(--blu); margin-bottom:0.5rem;">Clicca per selezionare 2 o più date:</p>';
+      
       data.slots.forEach(slot => {
         let div = document.createElement('div');
-        div.style.cssText = 'padding:0.7rem; border:1px solid var(--bordo); border-radius:6px; margin-bottom:0.5rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s;';
+        div.style.cssText = 'padding:0.7rem; border:1px solid var(--bordo); border-radius:6px; margin-bottom:0.5rem; cursor:pointer; font-size:0.85rem; transition:all 0.2s; background:white; color:var(--testo);';
         div.textContent = slot.display;
+        
         div.onclick = function() {
           if (slotRinvioSelezionati.includes(slot.start)) {
             slotRinvioSelezionati = slotRinvioSelezionati.filter(s => s !== slot.start);
@@ -3260,9 +3264,9 @@ function caricaSlotRinvio() {
             div.style.borderColor = 'var(--bordo)';
           } else {
             slotRinvioSelezionati.push(slot.start);
-            div.style.background = 'var(--azzurro)'; 
+            div.style.background = 'var(--blu)'; 
             div.style.color = 'white';
-            div.style.borderColor = 'var(--azzurro)';
+            div.style.borderColor = 'var(--blu)';
           }
           document.getElementById('btn-invia-rinvio').style.display = slotRinvioSelezionati.length > 0 ? 'block' : 'none';
         };
@@ -3276,27 +3280,24 @@ function caricaSlotRinvio() {
 
 function inviaPropostaRinvio() {
   const rg = document.getElementById('rinvio-rg').value.trim().toUpperCase();
-  const email = document.getElementById('rinvio-email').value.trim();
-  const status = document.getElementById('rinvio-status');
-  status.style.display = 'none';
-  
-  if (!rg || !email) { 
-    showMsg(status, '⚠ R.G. ed email (o username) sono obbligatori.', 'error'); 
-    return; 
-  }
-  
+  const emailList = document.getElementById('rinvio-email').value.trim();
   const btn = document.getElementById('btn-invia-rinvio');
+  
+  if (!rg) { alert("Inserisci il numero di R.G."); return; }
+  if (!emailList) { alert("Inserisci gli username (o le email) degli avvocati da invitare."); return; }
+  if (slotRinvioSelezionati.length < 2) { alert("Seleziona almeno 2 date da proporre ai partecipanti."); return; }
+  
   btn.disabled = true; 
   btn.textContent = 'Invio in corso...';
   
   const dateStr = slotRinvioSelezionati.join('|');
-  const url = SCRIPT_URL + '?action=lanciaPropostaRinvio&rg=' + encodeURIComponent(rg) + '&email=' + encodeURIComponent(email) + '&date=' + encodeURIComponent(dateStr) + '&username=' + encodeURIComponent(currentUser.username) + '&idEv=NUOVO';
+  const url = SCRIPT_URL + '?action=lanciaPropostaRinvio&rg=' + encodeURIComponent(rg) + '&email=' + encodeURIComponent(emailList) + '&date=' + encodeURIComponent(dateStr) + '&username=' + encodeURIComponent(currentUser.username) + '&idEv=NUOVO';
 
   fetch(url).then(r => r.json()).then(data => {
     btn.disabled = false; 
     btn.textContent = 'Invia Proposta alle Parti';
     if(data.ok) {
-      showMsg(status, '✓ Proposta inviata! Le opzioni sono state bloccate temporaneamente sul calendario.', 'success');
+      alert("✅ Proposta inviata! Le date sono state bloccate temporaneamente in agenda."); 
       document.getElementById('rinvio-rg').value = '';
       document.getElementById('rinvio-email').value = '';
       document.getElementById('rinvio-slots-container').innerHTML = '';
@@ -3304,12 +3305,12 @@ function inviaPropostaRinvio() {
       slotRinvioSelezionati = [];
       btn.style.display = 'none';
     } else {
-      showMsg(status, '⚠ ' + (data.error || 'Errore durante l\'invio.'), 'error');
+      alert("⚠ " + (data.error || "Errore durante l'invio."));
     }
   }).catch(err => {
       btn.disabled = false; 
       btn.textContent = 'Invia Proposta alle Parti';
-      showMsg(status, '⚠ Errore di connessione.', 'error');
+      alert("⚠ Errore di connessione.");
   });
 }
 
