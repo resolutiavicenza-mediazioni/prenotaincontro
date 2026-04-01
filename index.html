@@ -3980,51 +3980,57 @@ function inviaPropostaRinvioModal() {
 }
   function caricaListaProposte() {
   const container = document.getElementById('med-lista-proposte');
-  container.innerHTML = '<div class="spinner" style="width:24px;height:24px;margin:0 auto;"></div>';
+  if (!container) return;
   
+  // Mostra subito la rotellina per farti capire che è partito
+  container.innerHTML = '<div style="text-align:center;"><div class="spinner" style="width:24px;height:24px;margin:0 auto;"></div><p style="font-size:0.8rem;color:var(--grigio);margin-top:8px;">Recupero dati in corso...</p></div>';
+
   fetch(SCRIPT_URL + '?action=getProposte')
     .then(r => r.json())
     .then(data => {
-      if (!data.ok || !data.proposte || data.proposte.length === 0) {
+      if (!data.ok) {
+        container.innerHTML = '<p style="color:var(--rosso); font-size:0.85rem; text-align:center;">Errore server: ' + (data.error || 'Sconosciuto') + '</p>';
+        return;
+      }
+      if (!data.proposte || data.proposte.length === 0) {
         container.innerHTML = '<p style="font-size:0.85rem; color:var(--grigio); text-align:center; padding:1.5rem 0;">Nessun sondaggio inviato finora.</p>';
         return;
       }
-      
+
       let html = '';
       data.proposte.forEach(p => {
         const isCompletato = (p.stato === 'COMPLETATO');
         const bg = isCompletato ? '#d5f5e3' : '#fef9e7';
         const color = isCompletato ? 'var(--verde)' : 'var(--arancio)';
-        const statoTesto = isCompletato ? 'Concordato in Agenda' : 'In attesa di voti';
-        
+        const statoTesto = isCompletato ? 'Confermato in Agenda' : 'In attesa di voti';
+
         let votiHtml = '';
         if (!isCompletato) {
-          let invitatiList = p.invitati.split(',').map(i => i.trim());
-          let chiHaVotato = new Set();
+          let invitatiList = (p.invitati || '').split(',').map(i => i.trim()).filter(i => i);
+          let chiHaVotato = [];
           
-          for (let dataScelta in p.voti) {
-            p.voti[dataScelta].forEach(u => chiHaVotato.add(u));
+          for (let d in p.voti) {
+            if (Array.isArray(p.voti[d])) {
+                p.voti[d].forEach(u => {
+                    if (!chiHaVotato.includes(u)) chiHaVotato.push(u);
+                });
+            }
           }
-          
-          let mancanti = invitatiList.filter(i => !chiHaVotato.has(i));
-          
-          votiHtml = '<div style="margin-top:0.8rem; font-size:0.78rem; color:var(--grigio); background:var(--bianco); padding:0.6rem 0.8rem; border-radius:5px;">';
-          if (chiHaVotato.size > 0) {
-             votiHtml += '<span style="color:var(--verde);"><strong>Hanno votato:</strong> ' + Array.from(chiHaVotato).join(', ') + '</span><br>';
-          } else {
-             votiHtml += '<em>Nessuno ha ancora votato.</em><br>';
-          }
+          let mancanti = invitatiList.filter(i => !chiHaVotato.includes(i));
+
+          votiHtml = '<div style="margin-top:0.8rem; font-size:0.78rem; background:var(--bianco); padding:0.6rem 0.8rem; border-radius:5px;">';
+          votiHtml += '<strong>Hanno votato:</strong> <span style="color:var(--blu);">' + (chiHaVotato.join(', ') || 'nessuno') + '</span><br>';
           if (mancanti.length > 0) {
-             votiHtml += '<span style="color:var(--rosso); margin-top:0.3rem; display:inline-block;"><strong>Mancano al voto:</strong> ' + mancanti.join(', ') + '</span>';
+              votiHtml += '<span style="color:var(--rosso); margin-top:0.3rem; display:inline-block;"><strong>Mancano al voto:</strong> ' + mancanti.join(', ') + '</span>';
           }
           votiHtml += '</div>';
         }
-        
-        html += `<div style="padding:1.2rem; border:1px solid var(--bordo); border-radius:8px; margin-bottom:1rem; background:white; box-shadow: 0 2px 6px rgba(41,128,185,0.06);">
+
+        html += `<div style="padding:1.2rem; border:1px solid var(--bordo); border-radius:8px; margin-bottom:1rem; background:white; box-shadow:0 2px 5px rgba(41,128,185,0.05);">
           <div style="display:flex; justify-content:space-between; align-items:start;">
             <div>
               <strong style="color:var(--blu); font-size:1rem;">R.G. ${p.rg}</strong>
-              <div style="font-size:0.8rem; color:var(--grigio); margin-top:0.3rem;"><strong>Invitati:</strong> ${p.invitati}</div>
+              <div style="font-size:0.75rem; color:var(--grigio); margin-top:0.2rem;">Invitati: ${p.invitati}</div>
             </div>
             <span style="background:${bg}; color:${color}; padding:0.3rem 0.7rem; border-radius:20px; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">${statoTesto}</span>
           </div>
@@ -4034,7 +4040,7 @@ function inviaPropostaRinvioModal() {
       container.innerHTML = html;
     })
     .catch(err => {
-      container.innerHTML = '<p style="color:var(--rosso); font-size:0.85rem; text-align:center;">Errore di caricamento.</p>';
+      container.innerHTML = '<p style="color:var(--rosso); font-size:0.85rem; text-align:center;">Errore di connessione col server.</p>';
     });
 }
   function caricaListaProposte() {
