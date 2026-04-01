@@ -3442,6 +3442,150 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+<style>
+  .card-rinvio { background: white; border: 2px dashed var(--arancio); padding: 20px; border-radius: 12px; margin: 1.5rem; display: none; box-shadow: 0 4px 12px rgba(230, 126, 34, 0.1); }
+  .btn-rinvio { background: var(--arancio); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; margin-right: 8px; margin-bottom: 8px; transition: transform 0.2s; }
+  .btn-rinvio:hover { transform: scale(1.05); }
+</style>
 
+<div id="rinvio-modal" style="display:none; position:fixed; inset:0; background:rgba(26,74,122,0.5); z-index:9999; align-items:center; justify-content:center; padding:1.5rem;">
+  <div style="background:white; border-radius:14px; padding:2rem; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.25); animation:fadeUp 0.3s ease;">
+    <h3 style="font-family:Lora,serif; font-size:1.3rem; font-weight:400; color:var(--blu); margin-bottom:0.5rem;">Proponi Date Rinvio</h3>
+    <p style="font-size:0.85rem; color:var(--grigio); margin-bottom:1.5rem;">Procedura: <strong id="rinvio-rg-display"></strong></p>
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.8rem; align-items:end; margin-bottom:1.5rem;">
+      <div class="input-group" style="margin-bottom:0;"><label>Da (giorni)</label><input type="number" id="rinvio-min" value="60" /></div>
+      <div class="input-group" style="margin-bottom:0;"><label>A (giorni)</label><input type="number" id="rinvio-max" value="80" /></div>
+      <button onclick="cercaSlotRinvio()" class="btn-add" id="btn-cerca-rinvio" style="padding:0.8rem 1.2rem; background:var(--blu);">Cerca slot liberi</button>
+    </div>
+    
+    <div id="rinvio-slots-container" style="display:none; background:var(--cielo); padding:1rem; border-radius:8px; border:1px solid var(--bordo); margin-bottom:1.5rem; max-height:200px; overflow-y:auto;"></div>
+
+    <div class="input-group"><label>Username o Email delle parti (separati da virgola)</label><input type="text" id="rinvio-email" placeholder="mario.rossi, azienda.srl" /></div>
+    
+    <div style="display:flex; gap:0.8rem; margin-top:1.5rem;">
+      <button onclick="inviaPropostaRinvio()" id="btn-invia-rinvio" style="flex:1; padding:0.9rem; background:var(--arancio); color:white; border:none; border-radius:7px; font-family:'Raleway',sans-serif; font-size:0.85rem; font-weight:600; cursor:pointer; text-transform:uppercase;">Blocca date e Invia Proposta</button>
+      <button onclick="chiudiRinvioModal()" style="padding:0.9rem 1.2rem; background:none; border:1.5px solid var(--bordo); border-radius:7px; font-family:'Raleway',sans-serif; font-size:0.85rem; color:var(--grigio); cursor:pointer;">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// SOVRASCRITTURA AUTOMATICA DELLA FUNZIONE DELLA TABELLA PER AGGIUNGERE IL TASTO RINVIO
+function caricaPrenotazioniMediatore() {
+  var lista=document.getElementById('med-vedi-lista');
+  var count=document.getElementById('med-vedi-count');
+  var filtro=document.getElementById('med-vedi-filtro').value.trim();
+  var stato=document.getElementById('med-vedi-stato').value;
+  lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Caricamento...</div>';
+  count.textContent='';
+  fetch(SCRIPT_URL+'?action=getTuttePrenotazioni&filtro='+encodeURIComponent(filtro)+'&stato='+encodeURIComponent(stato))
+    .then(function(r){return r.json();})
+    .then(function(data){
+      lista.innerHTML='';
+      var pren=(data.prenotazioni||[]).filter(function(p){ return !p.mediatore||p.mediatore===''||p.mediatore.toLowerCase()===currentUser.username.toLowerCase(); });
+      if(pren.length===0){lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--grigio);font-size:0.85rem;">Nessuna prenotazione trovata.</div>';return;}
+      count.textContent=pren.length+' prenotazion'+(pren.length!==1?'i':'e');
+      pren.forEach(function(p){
+        var sc=p.stato==='CONFERMATO'?'#1a7a5e':p.stato==='CANCELLATO'?'#c0392b':'#e67e22';
+        var sb=p.stato==='CONFERMATO'?'#d5f5e3':p.stato==='CANCELLATO'?'#fdecea':'#fef9e7';
+        var st=p.stato==='CONFERMATO'?'Confermato':p.stato==='CANCELLATO'?'Cancellato':'In attesa';
+        var div=document.createElement('div');
+        div.style.cssText='padding:0.9rem 0;border-bottom:1px solid var(--bordo);display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:start;';
+        var left=document.createElement('div');
+        var d1=document.createElement('div');d1.style.cssText='font-weight:600;color:var(--blu);font-size:0.9rem;margin-bottom:0.2rem;';d1.textContent=p.data||'\u2014';left.appendChild(d1);
+        var d2=document.createElement('div');d2.style.cssText='font-size:0.82rem;color:var(--testo);margin-bottom:0.15rem;';d2.textContent=(p.parte||p.richiedente||'')+(p.rg?' \u00b7 R.G. '+p.rg:'');left.appendChild(d2);
+        var d3=document.createElement('div');d3.style.cssText='font-size:0.78rem;color:var(--grigio);';d3.textContent=(p.email||'')+' \u00b7 '+(p.modalita||'');left.appendChild(d3);
+        if(p.stato!=='CANCELLATO'){
+          var btnC=document.createElement('button');btnC.textContent='Cancella';
+          btnC.style.cssText='margin-top:0.4rem;margin-right:0.5rem;font-size:0.7rem;padding:0.25rem 0.65rem;background:none;border:1.5px solid #e8bdb9;border-radius:5px;color:var(--rosso);cursor:pointer;font-family:Raleway,sans-serif;font-weight:600;';
+          (function(eid,nome){btnC.onclick=function(){if(!confirm('Cancellare la prenotazione di '+nome+'?'))return;fetch(SCRIPT_URL+'?action=cancellaPrenotazione&eventId='+encodeURIComponent(eid)).then(function(r){return r.json();}).then(function(d){if(d.ok)caricaPrenotazioniMediatore();else alert(d.error||'Errore.');});};})(p.eventId,p.richiedente);
+          left.appendChild(btnC);
+          
+          var btnR=document.createElement('button');btnR.textContent='Proponi Rinvio';
+          btnR.style.cssText='margin-top:0.4rem;font-size:0.7rem;padding:0.25rem 0.65rem;background:var(--cielo);border:1.5px solid var(--arancio);border-radius:5px;color:var(--arancio);cursor:pointer;font-family:Raleway,sans-serif;font-weight:600;';
+          (function(eid, rg, parte){btnR.onclick=function(){ apriRinvioModal(eid, rg || parte); };})(p.eventId, p.rg, p.parte||p.richiedente);
+          left.appendChild(btnR);
+        }
+        div.appendChild(left);
+        var badge=document.createElement('span');badge.style.cssText='font-size:0.72rem;font-weight:600;padding:0.25rem 0.6rem;border-radius:20px;white-space:nowrap;background:'+sb+';color:'+sc+';';badge.textContent=st;div.appendChild(badge);lista.appendChild(div);
+      });
+    })
+    .catch(function(){lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--rosso);">Errore nel caricamento.</div>';});
+}
+
+let rinvioEvIdCorrente = '';
+let rinvioRgCorrente = '';
+
+function apriRinvioModal(eventId, rg) {
+  rinvioEvIdCorrente = eventId;
+  rinvioRgCorrente = rg || 'Sconosciuto';
+  document.getElementById('rinvio-rg-display').textContent = rinvioRgCorrente;
+  document.getElementById('rinvio-slots-container').style.display = 'none';
+  document.getElementById('rinvio-slots-container').innerHTML = '';
+  document.getElementById('rinvio-email').value = '';
+  document.getElementById('rinvio-modal').style.display = 'flex';
+}
+
+function chiudiRinvioModal() { document.getElementById('rinvio-modal').style.display = 'none'; }
+
+function cercaSlotRinvio() {
+  const min = document.getElementById('rinvio-min').value;
+  const max = document.getElementById('rinvio-max').value;
+  const container = document.getElementById('rinvio-slots-container');
+  const btn = document.getElementById('btn-cerca-rinvio');
+  
+  btn.disabled = true; btn.textContent = 'Ricerca...';
+  container.style.display = 'block';
+  container.innerHTML = '<div style="text-align:center; padding:1rem; font-size:0.85rem; color:var(--grigio);">Caricamento slot disponibili dal calendario...</div>';
+  
+  fetch(SCRIPT_URL + '?action=getSlotsRinvio&username=' + encodeURIComponent(currentUser.username) + '&min=' + min + '&max=' + max)
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled = false; btn.textContent = 'Cerca slot liberi';
+      if (!data.ok) { container.innerHTML = '<div style="color:var(--rosso); padding:1rem; font-size:0.85rem;">' + data.error + '</div>'; return; }
+      if (data.slots.length === 0) { container.innerHTML = '<div style="color:var(--grigio); padding:1rem; font-size:0.85rem;">Nessuno slot libero trovato tra ' + min + ' e ' + max + ' giorni.</div>'; return; }
+      
+      let html = '<p style="font-size:0.8rem; font-weight:600; color:var(--blu); margin-bottom:0.5rem;">Seleziona 2 o più date da proporre:</p>';
+      data.slots.forEach(slot => {
+        let dateObj = new Date(slot.start);
+        let ore = dateObj.getHours().toString().padStart(2, '0');
+        let dataFormattata = dateObj.toLocaleDateString('it-IT', {weekday: 'short', day: 'numeric', month: 'short'}) + ' - ore ' + ore + ':00';
+        
+        html += `<label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem; font-size:0.85rem; cursor:pointer; background:white; padding:0.4rem; border:1px solid var(--bordo); border-radius:5px;">
+                  <input type="checkbox" class="rinvio-checkbox" value="${slot.start}" style="accent-color:var(--azzurro); width:16px; height:16px;">
+                  ${dataFormattata}
+                 </label>`;
+      });
+      container.innerHTML = html;
+    })
+    .catch(err => { btn.disabled = false; btn.textContent = 'Cerca slot liberi'; container.innerHTML = '<div style="color:var(--rosso); padding:1rem; font-size:0.85rem;">Errore di connessione.</div>'; });
+}
+
+function inviaPropostaRinvio() {
+  const emailList = document.getElementById('rinvio-email').value.trim();
+  const checkboxes = document.querySelectorAll('.rinvio-checkbox:checked');
+  const btn = document.getElementById('btn-invia-rinvio');
+  
+  if (checkboxes.length < 2) { alert("Seleziona almeno 2 date da proporre ai partecipanti."); return; }
+  if (!emailList) { alert("Inserisci gli username (o le email) degli avvocati da invitare."); return; }
+  
+  const dateScelte = Array.from(checkboxes).map(cb => cb.value).join('|');
+  btn.disabled = true; btn.textContent = 'Blocco date e Invio in corso...';
+  
+  const url = SCRIPT_URL + '?action=lanciaPropostaRinvio' +
+              '&idEv=' + encodeURIComponent(rinvioEvIdCorrente) + '&rg=' + encodeURIComponent(rinvioRgCorrente) +
+              '&email=' + encodeURIComponent(emailList) + '&date=' + encodeURIComponent(dateScelte) + '&username=' + encodeURIComponent(currentUser.username);
+              
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled = false; btn.textContent = 'Blocca date e Invia Proposta';
+      if (data.ok) { alert("✅ Proposta inviata! Le date sono state bloccate temporaneamente in agenda."); chiudiRinvioModal(); } 
+      else { alert("Errore: " + data.error); }
+    })
+    .catch(err => { btn.disabled = false; btn.textContent = 'Blocca date e Invia Proposta'; alert("Errore di connessione al server."); });
+}
+</script>
 </body>
 </html>
