@@ -3454,6 +3454,8 @@ function inviaPropostaRinvio() {
   });
 }
 
+var dateScelteParte = [];
+
 function controllaVotiPendenti() {
   if (!currentUser || currentUser.role !== 'user') return;
   
@@ -3467,6 +3469,9 @@ function controllaVotiPendenti() {
         
         const contenitore = document.getElementById('voto-rinvio-opzioni');
         contenitore.innerHTML = '';
+        dateScelteParte = []; // Resetta selezioni
+        document.getElementById('btn-conferma-voti-parte').style.display = 'none';
+        document.getElementById('voto-rinvio-msg').style.display = 'none';
         
         const giorni = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
         const mesi = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
@@ -3476,27 +3481,44 @@ function controllaVotiPendenti() {
           const dEnd = new Date(d.getTime() + 2*3600*1000);
           const dateDisplay = giorni[d.getDay()] + ' ' + d.getDate() + ' ' + mesi[d.getMonth()] + ' ' + d.getFullYear() + ' - ore ' + String(d.getHours()).padStart(2,'0') + ':00-' + String(dEnd.getHours()).padStart(2,'0') + ':00';
           
-          let btn = document.createElement('button');
-          btn.textContent = dateDisplay;
-          btn.style.cssText = 'padding:0.9rem; background:var(--cielo); border:1px solid var(--azzurro); border-radius:6px; cursor:pointer; font-weight:600; color:var(--blu); font-family:"Raleway",sans-serif; transition:all 0.2s;';
-          btn.onmouseover = function() { this.style.background = 'var(--azzurro)'; this.style.color = 'white'; };
-          btn.onmouseout = function() { this.style.background = 'var(--cielo)'; this.style.color = 'var(--blu)'; };
-          btn.onclick = function() { inviaVotoRinvio(dISO, btn); };
-          contenitore.appendChild(btn);
+          let div = document.createElement('div');
+          div.textContent = dateDisplay;
+          div.style.cssText = 'padding:0.8rem; background:white; border:1.5px solid var(--bordo); border-radius:6px; cursor:pointer; font-weight:600; color:var(--testo); font-family:"Raleway",sans-serif; transition:all 0.2s; font-size:0.85rem;';
+          
+          // Logica per clic multipli
+          div.onclick = function() {
+            if (dateScelteParte.includes(dISO)) {
+              dateScelteParte = dateScelteParte.filter(d => d !== dISO);
+              div.style.background = 'white'; 
+              div.style.color = 'var(--testo)';
+              div.style.borderColor = 'var(--bordo)';
+            } else {
+              dateScelteParte.push(dISO);
+              div.style.background = 'var(--azzurro)'; 
+              div.style.color = 'white';
+              div.style.borderColor = 'var(--azzurro)';
+            }
+            // Mostra il bottone "Conferma" solo se è selezionata almeno una data
+            document.getElementById('btn-conferma-voti-parte').style.display = dateScelteParte.length > 0 ? 'block' : 'none';
+          };
+          contenitore.appendChild(div);
         });
       }
     })
     .catch(e => console.log('Errore verifica rinvio:', e));
 }
 
-function inviaVotoRinvio(dataScelta, btnElement) {
+function inviaVotiMultipli() {
+  const btnElement = document.getElementById('btn-conferma-voti-parte');
   btnElement.textContent = 'Registrazione in corso...';
-  btnElement.style.pointerEvents = 'none';
+  btnElement.disabled = true;
   
   const container = document.getElementById('voto-rinvio-opzioni');
   Array.from(container.children).forEach(child => child.style.pointerEvents = 'none');
+  
+  const dateString = dateScelteParte.join('|');
 
-  fetch(SCRIPT_URL + '?action=registraVoto&id=' + encodeURIComponent(idPropostaAttiva) + '&dataScelta=' + encodeURIComponent(dataScelta) + '&username=' + encodeURIComponent(currentUser.username))
+  fetch(SCRIPT_URL + '?action=registraVoto&id=' + encodeURIComponent(idPropostaAttiva) + '&dataScelta=' + encodeURIComponent(dateString) + '&username=' + encodeURIComponent(currentUser.username))
     .then(r => r.json())
     .then(res => {
       let msg = document.getElementById('voto-rinvio-msg');
@@ -3504,14 +3526,14 @@ function inviaVotoRinvio(dataScelta, btnElement) {
       if (res.ok) {
           msg.style.background = '#d5f5e3'; 
           msg.style.color = 'var(--verde)';
-          msg.innerHTML = res.match ? '<strong>✓ Tutti d\'accordo!</strong> L\'incontro è stato confermato in agenda.' : '<strong>✓ Voto registrato.</strong> In attesa delle altre parti.';
+          msg.innerHTML = res.match ? '<strong>✓ Incontro Confermato!</strong><br>Tutte le parti hanno concordato una data in comune.' : '<strong>✓ Scelte registrate.</strong><br>In attesa che le altre parti votino.';
           setTimeout(() => { document.getElementById('voto-rinvio-modal').style.display = 'none'; }, 4000);
       } else {
           msg.style.background = '#fdecea'; 
           msg.style.color = 'var(--rosso)';
           msg.textContent = '⚠ Errore: ' + res.error;
-          btnElement.textContent = 'Riprova';
-          btnElement.style.pointerEvents = 'auto';
+          btnElement.textContent = 'Conferma Scelte';
+          btnElement.disabled = false;
           Array.from(container.children).forEach(child => child.style.pointerEvents = 'auto');
       }
     })
@@ -3521,8 +3543,8 @@ function inviaVotoRinvio(dataScelta, btnElement) {
         msg.style.background = '#fdecea'; 
         msg.style.color = 'var(--rosso)';
         msg.textContent = '⚠ Errore di connessione.';
-        btnElement.textContent = 'Riprova';
-        btnElement.style.pointerEvents = 'auto';
+        btnElement.textContent = 'Conferma Scelte';
+        btnElement.disabled = false;
         Array.from(container.children).forEach(child => child.style.pointerEvents = 'auto');
     });
 }
