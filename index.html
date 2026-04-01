@@ -20,6 +20,107 @@
     --arancio:   #e67e22;
   }
 
+  /* Nuovi stili per Mediazione Collettiva */
+  .card-collettiva {
+    background: white;
+    border: 2px solid var(--blu);
+    border-radius: 12px;
+    padding: 25px;
+    margin: 30px 0;
+    box-shadow: 0 10px 25px rgba(26, 74, 122, 0.1);
+  }
+
+  .card-collettiva h3 {
+    color: var(--blu);
+    margin-top: 0;
+    font-size: 1.4rem;
+    border-bottom: 2px solid var(--cielo);
+    padding-bottom: 10px;
+  }
+
+  .card-collettiva p {
+    color: var(--testo);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .input-collettiva {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 15px 0;
+    border: 1px solid var(--bordo);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    box-sizing: border-box; /* Evita che l'input esca dai bordi */
+  }
+
+  .input-collettiva:focus {
+    outline: none;
+    border-color: var(--azzurro);
+    box-shadow: 0 0 0 3px var(--cielo);
+  }
+
+  .btn-collettiva {
+    background: var(--blu);
+    color: white;
+    border: none;
+    padding: 15px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+    width: 100%;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .btn-collettiva:hover {
+    background: var(--azzurro);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+
+  .btn-collettiva:active {
+    transform: translateY(0);
+  }
+
+  .btn-collettiva:disabled {
+    background: var(--grigio);
+    cursor: not-allowed;
+  }
+  /* Stili per il pulsante Rinvio */
+  .btn-rinvio {
+    background: var(--arancio);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 5px;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .btn-rinvio:hover {
+    background: var(--testo);
+    transform: scale(1.05);
+  }
+
+  .card-rinvio {
+    background: white;
+    border: 2px dashed var(--arancio);
+    padding: 20px;
+    border-radius: 12px;
+    margin: 25px 0;
+    display: none; /* Rimane nascosto finché lo script non trova proposte per l'utente */
+    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.1);
+  }
+</style>
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
@@ -1123,8 +1224,21 @@
     <button class="btn-topbar admin" id="btn-go-admin" onclick="showAdmin()" style="display:none;">⚙ Admin</button>
     <button class="btn-topbar" onclick="doLogout()">Esci</button>
   </div>
+
   <div id="email-missing-alert" style="display:none; background:#fef9e7; border-bottom:2px solid var(--arancio); padding:0.7rem 1.5rem; font-size:0.82rem; color:#7d6608;">
     ⚠ <strong>Email account non impostata.</strong> Vai in <button onclick="mostraImpostaEmail()" style="background:none;border:none;cursor:pointer;color:var(--azzurro);font-size:0.82rem;text-decoration:underline;padding:0;">Impostazioni</button> per aggiungerla — riceverai in copia tutte le comunicazioni.
+  </div>
+
+  <div id="container-rinvio" class="card-rinvio" style="display: none; margin: 1rem 1.5rem;">
+    <h4 style="color: var(--arancio); margin-top: 0; display: flex; align-items: center; gap: 8px; font-size: 1rem;">
+      <span>📅</span> Opzioni Data Rinvio: R.G. <span id="rg-display"></span>
+    </h4>
+    <p style="font-size: 0.85rem; margin-bottom: 12px; color: var(--testo); line-height: 1.4;">
+      Il mediatore ha proposto delle date per il rinvio di questa procedura. 
+      <strong>Conferma la tua disponibilità:</strong>
+    </p>
+    <div id="lista-date-rinvio" style="display: flex; flex-wrap: wrap; gap: 8px;">
+      </div>
   </div>
 
   <header>
@@ -2863,21 +2977,55 @@ async function salvaImpostazioniEmail(){
 }
 
 // ============================================================
-// AVVIO
+// AVVIO (Versione con Controllo Rinvii)
 // ============================================================
 window.onload = async function() {
   const session = getSession();
   if (session) {
     currentUser = session;
+    userLogged = session.username; // Assicuriamoci che userLogged sia popolato
     if (session.role === 'admin') showAdmin();
     else if (session.role === 'mediatore') showMediatore();
-    else goToApp();
+    else {
+      goToApp();
+      // Chiamata automatica per controllare se ci sono rinvii pendenti
+      attivaControlloRinvii(session.username); 
+    }
   } else {
     document.getElementById('login-screen').style.display = 'flex';
   }
+  
   document.getElementById('login-password').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
   document.getElementById('login-username').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('login-password').focus(); });
 };
+
+/**
+ * Funzioni di supporto per la gestione Rinvii Collettivi
+ */
+function attivaControlloRinvii(username) {
+  if (!username) return;
+  google.script.run.withSuccessHandler(function(risposta) {
+    if (risposta && risposta.haProposte) {
+      document.getElementById('container-rinvio').style.display = 'block';
+      document.getElementById('rg-display').innerText = risposta.rg;
+      let html = "";
+      // Genera i bottoni per le date separate da | nel database
+      risposta.date.forEach(d => {
+        html += `<button class="btn-rinvio" onclick="inviaConfermaRinvio('${risposta.id}', '${d}', '${username}')">Disponibile ${d}</button>`;
+      });
+      document.getElementById('lista-date-rinvio').innerHTML = html;
+    }
+  }).verificaRinvioPerUtente(username);
+}
+
+function inviaConfermaRinvio(idProposta, dataScelta, username) {
+  if(confirm("Confermi la tua disponibilità per il " + dataScelta + "?")) {
+    google.script.run.withSuccessHandler(function() {
+      alert("✅ Preferenza registrata con successo!");
+      document.getElementById('container-rinvio').style.display = 'none';
+    }).registraVotoRinvio(idProposta, dataScelta, username);
+  }
+}
 </script>
 
 <!-- ===== MODALE IMPOSTAZIONI EMAIL ===== -->
