@@ -3876,6 +3876,21 @@ function caricaListaProposte() {
             </div>
             <span style="background:${bg}; color:${color}; padding:0.3rem 0.7rem; border-radius:20px; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">${statoTesto}</span>
           </div>
+          ${(() => {
+            if (!p.date) return '';
+            const giorni = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+            const mesi = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+            const dateList = p.date.split('|').map(iso => {
+              try {
+                const d = new Date(iso);
+                return giorni[d.getDay()] + ' ' + d.getDate() + ' ' + mesi[d.getMonth()] + ' — ore ' + String(d.getHours()).padStart(2,'0') + ':00';
+              } catch(e) { return iso; }
+            });
+            return '<div style="margin-top:0.8rem; font-size:0.78rem; color:var(--testo); background:var(--cielo); padding:0.6rem 0.8rem; border-radius:5px; border:1px solid var(--bordo);">'
+              + '<strong style="color:var(--azzurro);">Date proposte:</strong><br>'
+              + dateList.map(d => '• ' + d).join('<br>')
+              + '</div>';
+          })()}
           ${votiHtml}
         </div>`;
       });
