@@ -3283,41 +3283,75 @@ function caricaSlotRinvio() {
     });
 }
 
+// ============================================================
+// TABELLA PARTECIPANTI SONDAGGIO — HELPERS
+// ============================================================
+function aggiungiRigaRinvio(containerId) {
+  var container = document.getElementById(containerId);
+  var row = document.createElement('div');
+  row.style.cssText = 'display:grid; grid-template-columns:1fr 1fr auto; gap:0.4rem; margin-bottom:0.4rem; align-items:center;';
+  row.innerHTML =
+    '<input type="email" placeholder="avvocato@studio.it" style="padding:0.55rem 0.7rem; border:1.5px solid var(--bordo); border-radius:6px; font-family:Raleway,sans-serif; font-size:0.83rem; width:100%;" oninput="suggerisciUsername(this)">' +
+    '<input type="text" placeholder="Cognome26" style="padding:0.55rem 0.7rem; border:1.5px solid var(--bordo); border-radius:6px; font-family:Raleway,sans-serif; font-size:0.83rem; width:100%;" class="rinvio-username-input">' +
+    '<button onclick="this.parentElement.remove()" style="width:28px; height:28px; border:none; background:none; color:var(--grigio); cursor:pointer; font-size:1rem; flex-shrink:0; padding:0;">✕</button>';
+  container.appendChild(row);
+}
+
+function suggerisciUsername(emailInput) {
+  var email = emailInput.value.trim();
+  var row = emailInput.parentElement;
+  var usernameInput = row.querySelector('.rinvio-username-input');
+  if (!usernameInput || usernameInput.value.trim()) return;
+  var local = email.split('@')[0] || '';
+  var parts = local.split(/[\._-]/);
+  var cognome = parts[parts.length > 1 ? parts.length - 1 : 0] || parts[0];
+  cognome = cognome.charAt(0).toUpperCase() + cognome.slice(1).toLowerCase();
+  var anno = new Date().getFullYear().toString().slice(-2);
+  usernameInput.value = cognome + anno;
+}
+
+function getRighePartecipanti(containerId) {
+  var container = document.getElementById(containerId);
+  var rows = container.querySelectorAll('div');
+  var result = [];
+  rows.forEach(function(row) {
+    var inputs = row.querySelectorAll('input');
+    if (inputs.length >= 2) {
+      var email = inputs[0].value.trim();
+      var username = inputs[1].value.trim();
+      if (email && username) result.push({ email: email, username: username });
+    }
+  });
+  return result;
+}
+
 function inviaPropostaRinvio() {
   const rg = document.getElementById('rinvio-rg').value.trim().toUpperCase();
-  const emailList = document.getElementById('rinvio-email').value.trim();
+  const partecipanti = getRighePartecipanti('rinvio-partecipanti');
   const btn = document.getElementById('btn-invia-rinvio');
-  
   if (!rg) { alert("Inserisci il numero di R.G."); return; }
-  if (!emailList) { alert("Inserisci gli username (o le email) degli avvocati da invitare."); return; }
-  if (slotRinvioSelezionati.length < 2) { alert("Seleziona almeno 2 date da proporre ai partecipanti."); return; }
-  
-  btn.disabled = true; 
-  btn.textContent = 'Invio in corso...';
-  
+  if (partecipanti.length === 0) { alert("Aggiungi almeno un partecipante con email e username."); return; }
+  if (slotRinvioSelezionati.length < 2) { alert("Seleziona almeno 2 date da proporre."); return; }
+  btn.disabled = true;
+  btn.textContent = 'Creazione utenti e invio in corso...';
   const dateStr = slotRinvioSelezionati.join('|');
-  const url = SCRIPT_URL + '?action=lanciaPropostaRinvio&rg=' + encodeURIComponent(rg) + '&email=' + encodeURIComponent(emailList) + '&date=' + encodeURIComponent(dateStr) + '&username=' + encodeURIComponent(currentUser.username) + '&idEv=NUOVO';
-
+  const url = SCRIPT_URL + '?action=lanciaPropostaRinvio&rg=' + encodeURIComponent(rg) +
+              '&date=' + encodeURIComponent(dateStr) +
+              '&username=' + encodeURIComponent(currentUser.username) +
+              '&idEv=NUOVO' +
+              '&partecipanti=' + encodeURIComponent(JSON.stringify(partecipanti));
   fetch(url).then(r => r.json()).then(data => {
-    btn.disabled = false; 
-    btn.textContent = 'Invia Proposta alle Parti';
-    if(data.ok) {
-      alert("✅ Proposta inviata! Le date sono state bloccate temporaneamente in agenda."); 
+    btn.disabled = false; btn.textContent = 'Invia Proposta alle Parti';
+    if (data.ok) {
+      alert("✅ Proposta inviata!\nGli utenti sono stati creati e hanno ricevuto le istruzioni via email.");
       caricaListaProposte();
       document.getElementById('rinvio-rg').value = '';
-      document.getElementById('rinvio-email').value = '';
+      document.getElementById('rinvio-partecipanti').innerHTML = '';
       document.getElementById('rinvio-slots-container').innerHTML = '';
       document.getElementById('rinvio-slots-container').style.display = 'none';
-      slotRinvioSelezionati = [];
-      btn.style.display = 'none';
-    } else {
-      alert("⚠ " + (data.error || "Errore durante l'invio."));
-    }
-  }).catch(err => {
-      btn.disabled = false; 
-      btn.textContent = 'Invia Proposta alle Parti';
-      alert("⚠ Errore di connessione.");
-  });
+      slotRinvioSelezionati = []; btn.style.display = 'none';
+    } else { alert("⚠ " + (data.error || "Errore.")); }
+  }).catch(() => { btn.disabled = false; btn.textContent = 'Invia Proposta alle Parti'; alert("⚠ Errore di connessione."); });
 }
 
 var dateScelteParte = [];
@@ -3605,19 +3639,27 @@ window.onload = async function() {
 <div id="med-tab-rinvii" style="display:none">
       <div class="admin-card">
         <h3>&#128197; Proponi Date Incontro / Rinvio</h3>
-        <p style="font-size:0.82rem;color:var(--grigio);margin-bottom:1.2rem;">Ricerca slot liberi nella tua agenda e invia un sondaggio date alle parti. Crea l'appuntamento solo quando tutti concordano.</p>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:0.5rem;">
-          <div class="input-group">
-            <label>R.G. Procedura</label>
-            <input type="text" id="rinvio-rg" placeholder="Es. 123/26" style="text-transform:uppercase;">
-          </div>
-          <div class="input-group">
-            <label>Username o Email Invitati (virgola)</label>
-            <input type="text" id="rinvio-email" placeholder="avv1, mario.rossi">
-          </div>
+        <p style="font-size:0.82rem;color:var(--grigio);margin-bottom:1.2rem;">Ricerca slot liberi nella tua agenda e invia un sondaggio date. Il sistema crea automaticamente l'account per ogni partecipante e invia via email le istruzioni di accesso con lo username assegnato.</p>
+
+        <div class="input-group">
+          <label>R.G. Procedura</label>
+          <input type="text" id="rinvio-rg" placeholder="Es. 123/26" style="text-transform:uppercase; max-width:200px;">
         </div>
-        
+
+        <!-- Tabella partecipanti -->
+        <div style="margin-bottom:1.2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <label style="font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--azzurro); font-weight:600;">Partecipanti invitati</label>
+            <button onclick="aggiungiRigaRinvio('rinvio-partecipanti')" style="font-size:0.72rem; padding:0.25rem 0.7rem; background:none; border:1.5px solid var(--azzurro); border-radius:5px; color:var(--azzurro); cursor:pointer; font-family:Raleway,sans-serif; font-weight:600;">+ Aggiungi</button>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.4rem; margin-bottom:0.4rem; padding:0 0.2rem;">
+            <span style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--grigio); font-weight:600;">Email</span>
+            <span style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--grigio); font-weight:600;">Username (es. Rossi26)</span>
+            <span></span>
+          </div>
+          <div id="rinvio-partecipanti"></div>
+        </div>
+
         <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:1rem; align-items:end; margin-bottom:1.5rem;">
           <div class="input-group" style="margin-bottom:0;">
             <label>Giorni Minimi</label><input type="number" id="rinvio-min" value="10">
@@ -3695,7 +3737,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     <div id="rinvio-modal-slots-container" style="display:none; background:var(--cielo); padding:1rem; border-radius:8px; border:1px solid var(--bordo); margin-bottom:1.5rem; max-height:200px; overflow-y:auto;"></div>
 
-    <div class="input-group"><label>Username o Email delle parti (separati da virgola)</label><input type="text" id="rinvio-modal-email" placeholder="mario.rossi, azienda.srl" /></div>
+    <div style="margin-bottom:1rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+        <label style="font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--azzurro); font-weight:600;">Partecipanti invitati</label>
+        <button onclick="aggiungiRigaRinvio('rinvio-modal-partecipanti')" style="font-size:0.72rem; padding:0.25rem 0.7rem; background:none; border:1.5px solid var(--azzurro); border-radius:5px; color:var(--azzurro); cursor:pointer; font-family:Raleway,sans-serif; font-weight:600;">+ Aggiungi</button>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.4rem; margin-bottom:0.4rem; padding:0 0.2rem;">
+        <span style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--grigio); font-weight:600;">Email</span>
+        <span style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--grigio); font-weight:600;">Username (es. Rossi26)</span>
+        <span></span>
+      </div>
+      <div id="rinvio-modal-partecipanti"></div>
+    </div>
     
     <div style="display:flex; gap:0.8rem; margin-top:1.5rem;">
       <button onclick="inviaPropostaRinvioModal()" id="btn-invia-rinvio-modal" style="flex:1; padding:0.9rem; background:var(--arancio); color:white; border:none; border-radius:7px; font-family:'Raleway',sans-serif; font-size:0.85rem; font-weight:600; cursor:pointer; text-transform:uppercase;">Blocca date e Invia Proposta</button>
@@ -3757,7 +3810,9 @@ function apriRinvioModal(eventId, rg) {
   document.getElementById('rinvio-rg-display').textContent = rinvioRgCorrente;
   document.getElementById('rinvio-modal-slots-container').style.display = 'none';
   document.getElementById('rinvio-modal-slots-container').innerHTML = '';
-  document.getElementById('rinvio-modal-email').value = '';
+  var mp = document.getElementById('rinvio-modal-partecipanti');
+  mp.innerHTML = '';
+  aggiungiRigaRinvio('rinvio-modal-partecipanti'); // una riga vuota di default
   document.getElementById('rinvio-modal').style.display = 'flex';
 }
 
@@ -3797,28 +3852,24 @@ function cercaSlotRinvioModal() {
 }
 
 function inviaPropostaRinvioModal() {
-  const emailList = document.getElementById('rinvio-modal-email').value.trim();
+  const partecipanti = getRighePartecipanti('rinvio-modal-partecipanti');
   const checkboxes = document.querySelectorAll('.rinvio-checkbox:checked');
   const btn = document.getElementById('btn-invia-rinvio-modal');
-  
-  if (checkboxes.length < 2) { alert("Seleziona almeno 2 date da proporre ai partecipanti."); return; }
-  if (!emailList) { alert("Inserisci gli username (o le email) degli avvocati da invitare."); return; }
-  
+  if (checkboxes.length < 2) { alert("Seleziona almeno 2 date da proporre."); return; }
+  if (partecipanti.length === 0) { alert("Aggiungi almeno un partecipante con email e username."); return; }
   const dateScelte = Array.from(checkboxes).map(cb => cb.value).join('|');
-  btn.disabled = true; btn.textContent = 'Blocco date e Invio in corso...';
-  
+  btn.disabled = true; btn.textContent = 'Creazione utenti e invio in corso...';
   const url = SCRIPT_URL + '?action=lanciaPropostaRinvio' +
-              '&idEv=' + encodeURIComponent(rinvioEvIdCorrente) + '&rg=' + encodeURIComponent(rinvioRgCorrente) +
-              '&email=' + encodeURIComponent(emailList) + '&date=' + encodeURIComponent(dateScelte) + '&username=' + encodeURIComponent(currentUser.username);
-              
-  fetch(url)
-    .then(r => r.json())
-    .then(data => {
-      btn.disabled = false; btn.textContent = 'Blocca date e Invia Proposta';
-      if (data.ok) { alert("✅ Proposta inviata! Le date sono state bloccate temporaneamente in agenda."); chiudiRinvioModal(); } 
-      else { alert("Errore: " + data.error); }
-    })
-    .catch(err => { btn.disabled = false; btn.textContent = 'Blocca date e Invia Proposta'; alert("Errore di connessione al server."); });
+              '&idEv=' + encodeURIComponent(rinvioEvIdCorrente) +
+              '&rg=' + encodeURIComponent(rinvioRgCorrente) +
+              '&date=' + encodeURIComponent(dateScelte) +
+              '&username=' + encodeURIComponent(currentUser.username) +
+              '&partecipanti=' + encodeURIComponent(JSON.stringify(partecipanti));
+  fetch(url).then(r => r.json()).then(data => {
+    btn.disabled = false; btn.textContent = 'Blocca date e Invia Proposta';
+    if (data.ok) { alert("✅ Proposta inviata!\nGli utenti sono stati creati e hanno ricevuto le istruzioni via email."); chiudiRinvioModal(); }
+    else { alert("Errore: " + data.error); }
+  }).catch(() => { btn.disabled = false; btn.textContent = 'Blocca date e Invia Proposta'; alert("Errore di connessione al server."); });
 }
 function caricaListaProposte() {
   const container = document.getElementById('med-lista-proposte-container');
