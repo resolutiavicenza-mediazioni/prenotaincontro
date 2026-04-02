@@ -2343,11 +2343,11 @@ function loadConfig() {
     .then(function(data) {
       document.getElementById('config-loading').style.display = 'none';
       if (!data.ok) {
-        document.getElementById('sede-mediatore-bar').style.display = 'none';
-        window._mediatoreSelezionato = username;
-        ricaricaSlots();
-        return;
-      }
+  document.getElementById('sede-mediatore-bar').style.display = 'none';
+  window._mediatoreSelezionato = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.username : '';
+  ricaricaSlots();
+  return;
+}
       var cfg = {};
       data.config.forEach(function(item) { cfg[item.key] = item.value; });
 
