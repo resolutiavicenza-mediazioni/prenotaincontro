@@ -3906,8 +3906,8 @@ function caricaPrenotazioniMediatore() {
     .catch(function(){lista.innerHTML='<div style="text-align:center;padding:2rem;color:var(--rosso);">Errore nel caricamento.</div>';});
 }
 
-let rinvioEvIdCorrente = '';
-let rinvioRgCorrente = '';
+var rinvioEvIdCorrente = '';
+var rinvioRgCorrente = '';
 
 function apriRinvioModal(eventId, rg) {
   rinvioEvIdCorrente = eventId;
