@@ -3609,7 +3609,7 @@ window.onload = async function() {
       </div>
     </div>
 
-    <div id="med-tab-rinvii" style="display:none">
+   <div id="med-tab-rinvii" style="display:none">
       <div class="admin-card">
         <h3>&#128197; Proponi Date Incontro / Rinvio</h3>
         <p style="font-size:0.82rem;color:var(--grigio);margin-bottom:1.2rem;">Ricerca slot liberi nella tua agenda e invia un sondaggio date alle parti. Crea l'appuntamento solo quando tutti concordano.</p>
@@ -3639,9 +3639,8 @@ window.onload = async function() {
         
         <button class="btn-add" id="btn-invia-rinvio" onclick="inviaPropostaRinvio()" style="display:none; width:100%; padding:0.9rem;">Invia Proposta alle Parti</button>
         <div id="rinvio-status" style="margin-top:0.8rem;font-size:0.82rem;padding:0.7rem 1rem;border-radius:6px;display:none;"></div>
-      </div>
-    </div>
-    <hr style="border:0; border-top:1px solid var(--bordo); margin: 2rem 0 1.5rem 0;">
+
+        <hr style="border:0; border-top:1px solid var(--bordo); margin: 2rem 0 1.5rem 0;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
           <h3 style="margin-bottom:0; font-size:1.1rem; color:var(--blu);">📊 Riepilogo Sondaggi Inviati</h3>
           <button onclick="caricaListaProposte()" style="padding:0.4rem 0.8rem; background:none; border:1.5px solid var(--bordo); border-radius:5px; cursor:pointer; color:var(--grigio); font-size:0.75rem; font-family:'Raleway',sans-serif; font-weight:600; transition:all 0.2s;">🔄 Aggiorna</button>
@@ -3649,21 +3648,8 @@ window.onload = async function() {
         <div id="med-lista-proposte">
            <p style="font-size:0.85rem; color:var(--grigio); text-align:center;">Caricamento...</p>
         </div>
-    <!-- Tab Password -->
-    <div id="med-tab-pwd" style="display:none">
-      <div class="admin-card">
-        <h3>&#128273; Cambia password</h3>
-        <div class="change-pwd-form">
-          <div class="input-group"><label>Nuova password</label><input type="password" id="med-new-pwd-1" placeholder="Minimo 6 caratteri" /></div>
-          <div class="input-group"><label>Conferma password</label><input type="password" id="med-new-pwd-2" /></div>
-        </div><br>
-        <button class="btn-add" onclick="changeMedPassword()" style="max-width:200px;">Salva password</button>
-        <div id="med-change-pwd-msg" style="margin-top:0.8rem;font-size:0.82rem;padding:0.6rem 1rem;border-radius:6px;display:none;"></div>
-      </div>
+        </div>
     </div>
-
-  </div>
-</div>
 
 <!-- Tab Mediatori (admin) -->
 <script>
